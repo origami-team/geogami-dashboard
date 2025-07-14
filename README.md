@@ -1,3 +1,3 @@
-**GEOGAMI DASHBOARD**
+# GEOGAMI DASHBOARD
 
-*Project presentation*
+## Project presentation
