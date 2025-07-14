@@ -157,16 +157,16 @@ ui <- page_sidebar(
              )
     ),
     tabPanel('All of your plays', uiOutput("file_selector_ui1"), textOutput("tabLegend"),
-             conditionalPanel(condition = "output.tabLegend == 'Type task: Navigation to flag' || output.tabLegend == 'Type task: Navigation with arrow' || output.tabLegend == 'Type task: Navigation via text' || output.tabLegend == 'Type task: Navigation via photo'",
+             conditionalPanel(condition = "output.tabLegend == 'Task type: Navigation to flag' || output.tabLegend == 'Task type: Navigation with arrow' || output.tabLegend == 'Task type: Navigation via text' || output.tabLegend == 'Task type: Navigation via photo'",
                               card(h4("Route length versus time"), tableOutput('cmp_table1'), downloadButton('save_table1', 'Save to csv'), style = "margin-top: 10px"),
                               ),
-             conditionalPanel(condition = "output.tabLegend == 'Type task: Direction determination'",
+             conditionalPanel(condition = "output.tabLegend == 'Task type: Direction determination'",
                               card(h4("Answer and error for direction task"), tableOutput('cmp_table2'), downloadButton('save_table2', 'Save to csv'), style = "margin-top: 10px")
                               ),
              ),
     tabPanel('Statistics per task', h3("Statistics"),uiOutput("file_selector_ui2"), textOutput("graphLegend"),
              #if the task category is navigation
-             conditionalPanel(condition = "output.graphLegend == 'Type task: Navigation to flag' || output.graphLegend == 'Type task: Navigation with arrow' || output.graphLegend == 'Type task: Navigation via text' || output.graphLegend == 'Type task: Navigation via photo'",
+             conditionalPanel(condition = "output.graphLegend == 'Task type: Navigation to flag' || output.graphLegend == 'Task type: Navigation with arrow' || output.graphLegend == 'Task type: Navigation via text' || output.graphLegend == 'Task type: Navigation via photo'",
                               selectInput(
                                 inputId = "graph_filter",
                                 label = "Choose graphic to display:",
@@ -185,7 +185,7 @@ ui <- page_sidebar(
                               )
                               ),
              #else, for the other tasks
-             conditionalPanel(condition = "output.graphLegend == 'Type task: Direction determination' || output.graphLegend == 'Type task: Free' || output.graphLegend == 'Type task: Self location' || output.graphLegend == 'Type task: Object location'",
+             conditionalPanel(condition = "output.graphLegend == 'Task type: Direction determination' || output.graphLegend == 'Task type: Free' || output.graphLegend == 'Task type: Self location' || output.graphLegend == 'Task type: Object location'",
                               selectInput(
                                 inputId = "graph_filter2",
                                 label = "Choose graphic to display:",
@@ -875,7 +875,7 @@ server <- function(input, output, session) {
       }
     }
     
-    output$mapLegend <- renderText({paste("Type task:",t)})
+    output$mapLegend <- renderText({paste("Task type:",t)})
     
     #Download map
     output$downloadMap <- downloadHandler(
@@ -1379,8 +1379,8 @@ server <- function(input, output, session) {
       }
     }
     
-    output$tabLegend <- renderText({paste("Type task:",t)})
-    output$graphLegend <- renderText({paste("Type task:",t)})
+    output$tabLegend <- renderText({paste("Task type:",t)})
+    output$graphLegend <- renderText({paste("Task type:",t)})
     
     #Save analyse tables
     output$save_table1 <- downloadHandler(
