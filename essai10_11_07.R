@@ -292,7 +292,7 @@ server <- function(input, output, session) {
     req(input$selected_files)
     
     selectInput("selected_multiple_files", 
-                "Choose file to view data:", 
+                "Choose file to compare:", 
                 choices = input$selected_files,
                 selected = input$selected_files,
                 multiple = TRUE, selectize = TRUE)
@@ -303,7 +303,7 @@ server <- function(input, output, session) {
     req(input$selected_files)
     
     selectInput("selected_multiple_files", 
-                "Choose file to view data:", 
+                "Choose file to compare:", 
                 choices = input$selected_files,
                 selected = input$selected_files,
                 multiple = TRUE, selectize = TRUE)
