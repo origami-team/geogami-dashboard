@@ -141,12 +141,13 @@ ui <- page_sidebar(
   
   # Main tabs
   tabsetPanel(
-    tabPanel('All of your tasks', uiOutput("file_selector_ui"),
-             div(id = "inlineDiv", style = "margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; background-color: #f9f9f9;",
-                  h5(textOutput("player_name"), textOutput("overall_score"), style = "margin-bottom: 5px")), 
+    tabPanel('All tasks', 
+             uiOutput("file_selector_ui"),
+             uiOutput("player_info_box"),
              DTOutput('iris_data'),
              div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                 downloadButton('save_data', 'Save to csv'))),
+                 uiOutput('save_big_table'))
+    ),
     tabPanel('Map', h3("Maps"), card(uiOutput("file_selector_ui3"), textOutput("mapLegend"), div(id="map", leafletOutput("map"),  style = "margin-top: 5px"),
              div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
                  downloadButton('downloadMap','Save the map')), full_screen = TRUE)),
@@ -156,7 +157,7 @@ ui <- page_sidebar(
                full_screen = TRUE
              )
     ),
-    tabPanel('All of your plays', uiOutput("file_selector_ui1"), textOutput("tabLegend"),
+    tabPanel('All plays', uiOutput("file_selector_ui1"), textOutput("tabLegend"),
              conditionalPanel(condition = "output.tabLegend == 'Task type: Navigation to flag' || output.tabLegend == 'Task type: Navigation with arrow' || output.tabLegend == 'Task type: Navigation via text' || output.tabLegend == 'Task type: Navigation via photo'",
                               card(h4("Route length versus time"), tableOutput('cmp_table1'), downloadButton('save_table1', 'Save to csv'), style = "margin-top: 10px"),
                               ),
@@ -751,13 +752,29 @@ server <- function(input, output, session) {
     output$overall_score <- renderText({
       paste("Overall score: ", good, "/", total, sep = "")
     })
+
+    
+    #HANDLING BIG TABLE - CODE IN OUTPUT
+    output$player_info_box <- renderUI({
+      req(data[[1]]$players[1])
+      
+      div(id = "inlineDiv",
+          style = "margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; border-radius: 5px; background-color: #f9f9f9;",
+          h5(textOutput("player_name")),
+          h5(textOutput("overall_score"))
+      )
+    })
+
     
     df_react(df)
     
     output$iris_data <- renderDT({
       df
     })
+
     
+
+
     
     # create icons (from Jakub's code)
     loc_marker <- makeIcon(
@@ -1401,6 +1418,8 @@ server <- function(input, output, session) {
       }
     )
   })
+
+
   
   
   #Download big table
@@ -1412,6 +1431,16 @@ server <- function(input, output, session) {
       write.csv(df_react(), file)
     }
   )
+
+  #HANDLING BIG TABLE DOWNLOAD FEATURE
+  output$save_big_table <- renderUI({
+    req(input$selected_data_file)
+    
+    if (length(input$selected_data_file) > 0 && input$selected_data_file != "") {
+      downloadButton('save_data', 'Save to csv')
+    }
+  })
+  
   
 }
 
