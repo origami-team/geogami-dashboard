@@ -223,15 +223,15 @@ server <- function(input, output, session) {
     paste("Current theme is:", input$theme)
   })
   
-  #Load JSON from API
-  # gameApi <- fromJSON("https://api.geogami.ifgi.de/game/all")
-  # ligue <- gameApi$content$name
-  # 
-  # observe({
-  #   updateSelectizeInput(session, "selected_games",
-  #                        choices = ligue,
-  #                        server = TRUE)
-  # })
+#Load JSON from API
+ gameApi <- fromJSON("https://api.geogami.ifgi.de/game/all")
+  ligue <- gameApi$content$name
+
+  observe({
+    updateSelectizeInput(session, "selected_games",
+                         choices = ligue,
+                         server = TRUE)
+  })
 
   
   #filtering JSON files -------------------
