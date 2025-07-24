@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  shiny:
+    platform: linux/amd64 # Comment this on production
+    build: .
+    ports:
+      - "3838:3838"
+    volumes:
+      - ./app.R:/srv/shiny-server/app.R  # host:container
+    container_name: shiny-app
