@@ -285,7 +285,7 @@ server <- function(input, output, session) {
     })
     
     for (i in 1:length(list_to_save)) {
-      copy_json <- toJSON(list_to_save[[i]], pretty = TRUE)
+      copy_json <- toJSON(list_to_save[[i]], pretty = TRUE, digits = NA)
       writeChar(substr(copy_json, 1, nchar(copy_json, type = "chars")), sel_to_save[i], nchars = nchar(copy_json, type = "chars"))
     }
     
