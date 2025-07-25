@@ -2,8 +2,8 @@ version: '3'
 
 services:
   shiny:
-    platform: linux/amd64 # Comment this on production
-    build: .
+    # platform: linux/amd64 # comment in if you are on Apple Silicon
+    image: ghcr.io/origami-team/shiny-app:main
     ports:
       - "3838:3838"
     volumes:
