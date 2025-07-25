@@ -338,7 +338,7 @@ server <- function(input, output, session) {
       list_to_save <- track_data_rv()  # Your reactive list
 
       # Save to JSON
-      jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE)
+      jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
     }
   )
 
