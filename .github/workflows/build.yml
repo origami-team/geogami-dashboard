@@ -31,4 +31,4 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64      # build only for Ubuntu/x86 servers
-          tags: yourdockerhubusername/shiny-app:latest
+          tags: yousef123/shiny-app:latest
