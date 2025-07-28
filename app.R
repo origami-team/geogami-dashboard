@@ -406,9 +406,9 @@ server <- function(input, output, session) {
     lapply(sel, function(file) {
       track_id <- sel
       # Construct the API URL
-      api_url <- paste0("https://api.geogami.ifgi.de/track/", track_id)
+      url <- paste0(apiURL_rv(), "/track/", track_id)
       # Fetch and return the JSON data from the server
-      track_data <- fetch_games_data_from_server(api_url, accessToken_rv())
+      track_data <- fetch_games_data_from_server(url, accessToken_rv())
       track_data_rv(track_data)  # Store the data in reactive value
       return(track_data)
     })
