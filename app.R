@@ -134,40 +134,46 @@ ui <- page_sidebar(
     ),
     
     #filter 1 - game selection
-    div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
+    conditionalPanel(
+      condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
+      div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
         selectizeInput(
-          inputId = "selected_games",
-          label = "Select your game:",
-          choices = NULL,  # Leave it empty initially
-        ),
+        inputId = "selected_games",
+        label = "Select your game:",
+        choices = NULL  # Leave it empty initially
+        )
+      )
     ),
     
     #filter 2 - JSON file selection
-    div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-        selectizeInput(
-          inputId = "selected_files",
-          label = "Select the players:",
-          choices = NULL,  # Leave it empty initially
-          multiple = TRUE,
-          options = list(
-            placeholder = "Start typing to search...",
-            plugins = list('remove_button'),
-            onChange = I('
-            function(value) {
-              if (value.includes("ALL")) {
-                // Select all files except "ALL"
-                var allFiles = Object.keys(this.options).filter(k => k !== "ALL");
-                this.setValue(allFiles);            
-                this.removeOption("ALL");           
+    conditionalPanel(
+      condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
+      div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
+          selectizeInput(
+            inputId = "selected_files",
+            label = "Select the players:",
+            choices = NULL,  # Leave it empty initially
+            multiple = TRUE,
+            options = list(
+              placeholder = "Start typing to search...",
+              plugins = list('remove_button'),
+              onChange = I('
+              function(value) {
+                if (value.includes("ALL")) {
+                  // Select all files except "ALL"
+                  var allFiles = Object.keys(this.options).filter(k => k !== "ALL");
+                  this.setValue(allFiles);            
+                  this.removeOption("ALL");           
+                }
               }
-            }
-          ')
-          )
-        ),
-        actionButton("reset", "Reset Selection", icon = icon("refresh"), style = "margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
-        textOutput("info_download"),
-        downloadButton("download_json", "Download JSON", icon = icon("download"), style = "margin-top: 10px; margin-bottom: 15px;")
-    ),
+            ')
+            )
+          ),
+          actionButton("reset", "Reset Selection", icon = icon("refresh"), style = "margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
+          textOutput("info_download"),
+          downloadButton("download_json", "Download JSON", icon = icon("download"), style = "margin-top: 10px; margin-bottom: 15px;")
+        )
+      ),
     
     
     #filter 2 - ID - 2nd div
