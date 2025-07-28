@@ -174,6 +174,11 @@ ui <- page_sidebar(
     div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
         numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 100)
     ),
+
+    div(
+      style = "text-align: left; color: #888; font-size: 12px;",
+      "Version 1.1.1"
+    )
   ),
   
   # Main tabs
@@ -271,7 +276,7 @@ server <- function(input, output, session) {
   observe({
     ## 1. Load list of user games / games that user has access to their tracks
     # Define the API URL and token
-    apiUrl <- "https://api.geogami.ifgi.de/game/usergames"
+    apiUrl <- paste0(apiURL_rv(), "/game/usergames")
     games_data <- fetch_games_data_from_server(apiUrl, accessToken_rv())
     games_name <- games_data$name
     if (is.null(games_data)) {
@@ -297,7 +302,7 @@ server <- function(input, output, session) {
     game_id <- input$selected_games
 
     # update the API URL with the selected game ID
-    apiUrl <- paste0("https://api.geogami.ifgi.de/track/gametracks/", game_id)
+    apiUrl <- paste0(apiURL_rv(), "/track/gametracks/", game_id)
     
     # Fetch game's tracks data from API
     # Note: The token is used for authentication, ensure it is valid
