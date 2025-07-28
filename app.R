@@ -16,13 +16,13 @@ iris$Species <- NULL
 json_dir <- getwd()  # or set to your specific directory, e.g., "data/json"
 
 # Function to fetch/load list of user games / games that user has access to their tracks
-fetch_games_data_from_server <- function(apiUrl, token) {
+fetch_games_data_from_server <- function(url, token) {
   message("Fetched data, now processing...")
   # Adds a space between 'Bearer' and the token
   auth_header <- paste("Bearer", token)  
 
   # Make the request with Authorization header
-  res <- GET(apiUrl, add_headers(Authorization = auth_header))
+  res <- GET(url, add_headers(Authorization = auth_header))
 
   # Handle the response
   if (status_code(res) == 200) {
@@ -246,6 +246,7 @@ server <- function(input, output, session) {
   # Store access token reactively
   accessToken_rv <- reactiveVal()
   track_data_rv <- reactiveVal()
+  apiURL_rv <- reactiveVal("https://api.geogami.ifgi.de")
 
   # Observe the URL query string for the token parameter
   observe({
@@ -377,9 +378,9 @@ server <- function(input, output, session) {
     lapply(selected, function(file) {
       track_id <- input$selected_data_file
       # Construct the API URL
-      api_url <- paste0("https://api.geogami.ifgi.de/track/", track_id)
+      url <- paste0(apiURL_rv(), "/track/", track_id)
       # Fetch and return the JSON data from the server
-      track_data <- fetch_games_data_from_server(api_url, accessToken_rv())
+      track_data <- fetch_games_data_from_server(url, accessToken_rv())
       track_data_rv(track_data)  # Store the data in reactive value
       return(track_data)
     })
@@ -719,14 +720,16 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     accuracy <- list()
     task_number <- data[[1]]$waypoints$taskNo #Task number
     for (i in 1:length(task_number)) {
-      if (task_number[i] == input$num_value) {
-        traj_lng <- append(traj_lng, data[[1]]$waypoints$position$coords$longitude[i])
-        traj_lat <- append(traj_lat, data[[1]]$waypoints$position$coords$latitude[i])
-        if (length(data[[1]]$waypoints$position$coords$accuracy) != 0) {
-          accuracy <- append(accuracy, data[[1]]$waypoints$position$coords$accuracy[i]) #accuracy on coordinates
-        }
-        else {
-          accuracy <- append(accuracy, 1)
+      if (!is.null(task_number[i])) {
+        if (task_number[i] == input$num_value) {
+          traj_lng <- append(traj_lng, data[[1]]$waypoints$position$coords$longitude[i])
+          traj_lat <- append(traj_lat, data[[1]]$waypoints$position$coords$latitude[i])
+          if (length(data[[1]]$waypoints$position$coords$accuracy) != 0) {
+            accuracy <- append(accuracy, data[[1]]$waypoints$position$coords$accuracy[i]) #accuracy on coordinates
+          }
+          else {
+            accuracy <- append(accuracy, 1)
+          }
         }
       }
     }
