@@ -1,4 +1,3 @@
-# version 1.0.2
 library(shiny)
 library(shinythemes)
 library(DT)
@@ -10,38 +9,7 @@ library(leaflet)
 library(jsonlite)
 library(bslib)
 library(htmlwidgets)
-library(httr)
 iris$Species <- NULL
-# Define the directory where JSON files are stored
-json_dir <- getwd()  # or set to your specific directory, e.g., "data/json"
-
-# Function to fetch/load list of user games / games that user has access to their tracks
-fetch_games_data_from_server <- function(url, token) {
-  message("Fetched data, now processing...")
-  # Adds a space between 'Bearer' and the token
-  auth_header <- paste("Bearer", token)  
-
-  # Make the request with Authorization header
-  res <- GET(url, add_headers(Authorization = auth_header))
-
-  # Handle the response
-  if (status_code(res) == 200) {
-    data <- fromJSON(content(res, "text", encoding = "UTF-8"))
-    if (length(data) == 0) {
-      return(NULL)  # No content found
-    }
-    # return the content of the response
-    message("Finished fetching data... m")
-    return(data$content)
-  } else {
-    if (status_code(res) == 401) {
-      warning("Unauthorized: Invalid or expired token.")
-    } else {
-      warning(paste("Failed to fetch games. Status code:", status_code(res)))
-    }
-    return(NULL)
-  }
-}
 
 ui <- page_sidebar(
   title = div(
@@ -104,16 +72,40 @@ ui <- page_sidebar(
     .bslib-page-sidebar h1 {
       margin: 0;
       font-size: 25px;
-      color: white;
+      color: white; 
     }
 
     .bslib-page-sidebar a {
-      color: black;
+      color: black; 
     }
     
     #inlineDiv {
       display: inline-block;
     }
+    
+    /* Default (desktop) sidebar: fixed width */
+    .bslib-page-sidebar .sidebar {
+      flex: 0 0 300px !important;
+      max-width: 300px !important;
+    }
+
+    /* On tablets (portrait, e.g. iPad ≤ 1024px), sidebar smaller */
+    @media (max-width: 1024px) {
+      .bslib-page-sidebar .sidebar {
+        flex: 0 0 220px !important;
+        max-width: 220px !important;
+      }
+    }
+
+    /* On very small screens (phones ≤ 768px), sidebar takes full width (collapses on top) */
+    @media (max-width: 768px) {
+      .bslib-page-sidebar .sidebar {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+      }
+    }
+    
+    
   '))
   ),
   
@@ -122,69 +114,57 @@ ui <- page_sidebar(
   # Sidebar with collapsible toggle
   
   sidebar = sidebar(
-    width = "400px",
+    width = "300px",
     radioButtons("theme", "Choose Theme:",
                  choices = c("Light", "Dark"),
                  inline = TRUE,
                  selected = "Light"),
-
-     # Upload JSON file section
-     div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 5px; border-radius: 5px;",
+    
+    div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 5px; border-radius: 5px;",
         fileInput("uploaded_json_file", "Upload JSON file:", accept = ".json", multiple = FALSE),
     ),
     
     #filter 1 - game selection
-    conditionalPanel(
-      condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
-      div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
+    div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
         selectizeInput(
-        inputId = "selected_games",
-        label = "Select your game:",
-        choices = NULL  # Leave it empty initially
-        )
-      )
+          inputId = "selected_games",
+          label = "Select your game:",
+          choices = NULL,  # Leave it empty initially
+        ),
     ),
     
     #filter 2 - JSON file selection
-    conditionalPanel(
-      condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
-      div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-          selectizeInput(
-            inputId = "selected_files",
-            label = "Select the players:",
-            choices = NULL,  # Leave it empty initially
-            multiple = TRUE,
-            options = list(
-              placeholder = "Start typing to search...",
-              plugins = list('remove_button'),
-              onChange = I('
-              function(value) {
-                if (value.includes("ALL")) {
-                  // Select all files except "ALL"
-                  var allFiles = Object.keys(this.options).filter(k => k !== "ALL");
-                  this.setValue(allFiles);            
-                  this.removeOption("ALL");           
-                }
+    div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
+        selectizeInput(
+          inputId = "selected_files",
+          label = "Select the players:",
+          choices = NULL,  # Leave it empty initially
+          multiple = TRUE,
+          options = list(
+            placeholder = "Start typing to search...",
+            plugins = list('remove_button'),
+            onChange = I('
+            function(value) {
+              if (value.includes("ALL")) {
+                // Select all files except "ALL"
+                var allFiles = Object.keys(this.options).filter(k => k !== "ALL");
+                this.setValue(allFiles);            
+                this.removeOption("ALL");           
               }
-            ')
-            )
-          ),
-          actionButton("reset", "Reset Selection", icon = icon("refresh"), style = "margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
-          textOutput("info_download"),
-          downloadButton("download_json", "Download JSON", icon = icon("download"), style = "margin-top: 10px; margin-bottom: 15px;")
-        )
-      ),
+            }
+          ')
+          )
+        ),
+        actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
+        actionButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;"),
+        textOutput("info_download"),
+    ),
     
     
     #filter 2 - ID - 2nd div
     div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-        numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 100)
+        numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 1)
     ),
-
-    div(
-      style = "text-align: left; color: #888; font-size: 12px;",
-      "Version 1.1.1"
-    )
   ),
   
   # Main tabs
@@ -211,7 +191,7 @@ ui <- page_sidebar(
                               card(h4("Answer and error for direction task"), tableOutput('cmp_table2'), downloadButton('save_table2', 'Save to csv'), style = "margin-top: 10px")
                               ),
              ),
-    tabPanel('Statistics per task', h3("Statistics"),uiOutput("file_selector_ui2"), textOutput("graphLegend"),
+    tabPanel('Statistics', h3("Statistics"),uiOutput("file_selector_ui2"), textOutput("graphLegend"),
              #if the task category is navigation
              conditionalPanel(condition = "output.graphLegend == 'Task type: Navigation to flag' || output.graphLegend == 'Task type: Navigation with arrow' || output.graphLegend == 'Task type: Navigation via text' || output.graphLegend == 'Task type: Navigation via photo'",
                               selectInput(
@@ -251,22 +231,9 @@ ui <- page_sidebar(
 
 
 server <- function(input, output, session) {
-
-  # Store selected game track data reactively
-  selected_game_tracks_rv <- reactiveVal()
-  # Store access token reactively
-  accessToken_rv <- reactiveVal()
-  track_data_rv <- reactiveVal()
-  apiURL_rv <- reactiveVal("https://api.geogami.ifgi.de")
-
-  # Observe the URL query string for the token parameter
-  observe({
-    query <- parseQueryString(session$clientData$url_search)
-    tokenParam <- query[["token"]]
-    accessToken_rv(tokenParam)
-  })
-
-    # Theme options
+  
+  
+  #theme options
   observe({
     if (input$theme == "Dark") {
       session$setCurrentTheme(bs_theme(bootswatch = "solar"))
@@ -274,166 +241,129 @@ server <- function(input, output, session) {
       session$setCurrentTheme(bs_theme(bootswatch = "flatly"))
     }
   })
-
-    output$text <- renderText({
+  
+  output$text <- renderText({
     paste("Current theme is:", input$theme)
   })
   
-  observe({
-    ## 1. Load list of user games / games that user has access to their tracks
-    # Define the API URL and token
-    apiUrl <- paste0(apiURL_rv(), "/game/usergames")
-    games_data <- fetch_games_data_from_server(apiUrl, accessToken_rv())
-    games_name <- games_data$name
-    if (is.null(games_data)) {
-      games_name <- character(0)
-      games_id <- character(0)
-    } else {
-      games_name <- games_data$name
-      games_id <- games_data[["_id"]]
-    }
+#Load JSON from API
+ gameApi <- fromJSON("https://api.geogami.ifgi.de/game/all")
+  ligue <- gameApi$content$name
 
-    ### 2. Populate select input for games
+  observe({
     updateSelectizeInput(session, "selected_games",
-                          choices = setNames(games_id, games_name),
-                          server = TRUE)
-  
-    output$info_download <- renderText({
-        ""
-      })
+                         choices = ligue,
+                         server = TRUE)
   })
-  
-  ### 3. When a game is selected
-  observeEvent(input$selected_games, {
-    game_id <- input$selected_games
 
-    # update the API URL with the selected game ID
-    apiUrl <- paste0(apiURL_rv(), "/track/gametracks/", game_id)
-    
-    # Fetch game's tracks data from API
-    # Note: The token is used for authentication, ensure it is valid
-    games_tracks <- fetch_games_data_from_server(apiUrl, accessToken_rv())
-
-    # Store in reactive value
-    selected_game_tracks_rv(games_tracks)
-  })
   
-  ### 4. Update file selector when data changes
+  #filtering JSON files -------------------
+  # Path to your folder
+  json_dir <- "C:\\Users\\Kuldeep Singh\\Desktop\\json_dummy"
+  
   observe({
-    tracks_data <- selected_game_tracks_rv()
+    # Get the list of JSON files in the folder
+    files <- list.files(json_dir, pattern = "\\.json$", full.names = FALSE)
     
-    if (!is.null(tracks_data)) {
-      # Use meaningful labels for the UI: e.g., "Player Name - Date"
-      choices <- setNames(
-        tracks_data[["_id"]],
-        paste0(tracks_data$players, " - ", tracks_data$createdAt)
-      )
-      
-      updateSelectizeInput(session, "selected_files",
-                          choices = choices,
-                          server = TRUE)
-
-      output$info_download <- renderText({
-        ""
-      })
-    }
+    files <- grep(input$selected_games, files, ignore.case = TRUE, value = TRUE)
+    
+    # Create choices including the "All Files" option
+    choices <- c("All Files" = "ALL", files)
+    
+    # Update the selectInput with these choices
+    updateSelectizeInput(session, "selected_files",
+                         choices = choices,
+                         server = TRUE)
+    
+    output$info_download <- renderText({
+      ""
+    })
   })
-
-  # Download json file
-  output$download_json <- downloadHandler(
-    filename = function() {
-      selected_track_data = track_data_rv()
-      paste0(selected_track_data$players, " - ", selected_track_data$createdAt,".json")
-    },
-    content = function(file) {
-      req(input$selected_files)  # Ensure some files are selected
-      list_to_save <- track_data_rv()  # Your reactive list
-
-      # Save to JSON
-      jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
-    }
-  )
-
-  ### 5. Reset file selector when reset button clicked
+  
   observeEvent(input$reset, {
-    tracks_data <- selected_game_tracks_rv()
+    files <- list.files(json_dir, pattern = "\\.json$", full.names = FALSE)
+    files <- grep(input$selected_games, files, ignore.case = TRUE, value = TRUE)
     
-    if (!is.null(tracks_data)) {
-      choices <- setNames(
-        tracks_data[["_id"]],
-        paste0(tracks_data$players, " - ", tracks_data$createdAt)
-      )
-      
-      updateSelectizeInput(session, "selected_files",
-                          choices = choices,
-                          selected = NULL,
-                          server = TRUE)
-    }
+    choices <- c("All Files" = "ALL", files)
+    
+    updateSelectizeInput(session, "selected_files",
+                         choices = choices,
+                         selected = NULL,
+                         server = TRUE)
+    
+    output$info_download <- renderText({
+      ""
+    })
   })
-
-  # 6. Select single file to view
+  
+  #Download json files that are saved directly in the same folder than the R code
+  #For big JSON files, we have a lack of information
+  observeEvent(input$download_json, {
+    req(input$selected_files)
+    
+    sel_to_save <- input$selected_files
+    
+    list_to_save <- lapply(sel_to_save, function(file) {
+      fromJSON(file.path(json_dir, file))
+    })
+    
+    for (i in 1:length(list_to_save)) {
+      copy_json <- toJSON(list_to_save[[i]], pretty = TRUE, digits = NA)
+      writeChar(substr(copy_json, 1, nchar(copy_json, type = "chars")), sel_to_save[i], nchars = nchar(copy_json, type = "chars"))
+    }
+    
+    output$info_download <- renderText({
+      "Selected files are downloaded"
+    })
+  })
+  
+  ###Selecting the file that must be analysed
   output$file_selector_ui <- renderUI({
     req(input$selected_files)
-
+    
+    
     selectInput("selected_data_file",
                 "Choose file to view data:",
                 choices = input$selected_files,
                 selected = input$selected_files[1])
   })
   
-  ### 7. Reactive: load selected single file data
+  # Automatically load all files if "All Files" is selected
   loaded_json <- reactive({
     req(input$selected_data_file)
+    
     selected <- input$selected_data_file
 
+    if ("ALL" %in% selected) {
+      selected <- list.files(json_dir, pattern = "\\.json$", full.names = FALSE)
+    }
+    
+    # Load selected JSON files
     lapply(selected, function(file) {
-      track_id <- input$selected_data_file
-      # Construct the API URL
-      url <- paste0(apiURL_rv(), "/track/", track_id)
-      # Fetch and return the JSON data from the server
-      track_data <- fetch_games_data_from_server(url, accessToken_rv())
-      track_data_rv(track_data)  # Store the data in reactive value
-      return(track_data)
+      fromJSON(file.path(json_dir, file))
     })
   })
-
+  
   #Get the uploaded json file
   uploaded_json <- reactive({
     req(input$uploaded_json_file)
     datapaths <- input$uploaded_json_file$datapath
     
     lapply(datapaths, function(path) {
-     jsonlite::fromJSON(path)
+      jsonlite::fromJSON(path)
     })
   })
-
-  ### 8. Reactive: load multiple json files for comparison
-  load_multiple <- reactive({
-    req(input$selected_multiple_files)
-
-    # If multiple IDs are found, use only the last one
-    sel <- input$selected_multiple_files[length(input$selected_multiple_files)]
-
-    lapply(sel, function(file) {
-      track_id <- sel
-      # Construct the API URL
-      url <- paste0(apiURL_rv(), "/track/", track_id)
-      # Fetch and return the JSON data from the server
-      track_data <- fetch_games_data_from_server(url, accessToken_rv())
-      track_data_rv(track_data)  # Store the data in reactive value
-      return(track_data)
-    })
-  })
-
-  ### 9. UI: multiple file selector for comparison (tables, graphics, maps, photos)
+  
+  
+  ##### Filters for comparison tables starts
   output$file_selector_ui1 <- renderUI({
     req(input$selected_files)
-
+    
     selectInput("selected_multiple_files", 
                 "Choose file to compare:", 
                 choices = input$selected_files,
                 selected = input$selected_files,
-                multiple = TRUE)
+                multiple = TRUE, selectize = TRUE)
   })
   
   ##### Filters for comparing Graphics starts
@@ -445,6 +375,16 @@ server <- function(input, output, session) {
                 choices = input$selected_files,
                 selected = input$selected_files,
                 multiple = TRUE, selectize = TRUE)
+  })
+  
+  # Load multiple json
+  load_multiple <- reactive({
+    req(input$selected_multiple_files)
+    
+    sel <- input$selected_multiple_files
+    lapply(sel, function(file) {
+      fromJSON(file.path(json_dir, file))
+    })
   })
   
   ##### Filter for maps
@@ -467,70 +407,92 @@ server <- function(input, output, session) {
                 selected = input$selected_files[1])
   })
   
-  #####Big table code
-  df_react <- reactiveVal()
-
-observeEvent(req(input$selected_data_file, input$num_value), {
-  req(input$num_value != 0 && input$num_value > 0)
   
-  data <- loaded_json()  # load selected JSON
   
-  if (is.null(data) || length(data) == 0) {
-    showNotification("No data found for selected file.", type = "error")
-    return()
-  }
-
-  # Defensive check: ensure expected structure exists
-  if (!("events" %in% names(data[[1]])) || !("task" %in% names(data[[1]]$events))) {
-    showNotification("Unexpected data format.", type = "error")
-    return()
-  }
-
-  id <- data[[1]]$events$task[["_id"]]
-  typ <- list()
-  cons <- list()
-  ans <- list()
-
-  # Extract reusable fields
-  csg <- data[[1]]$events$task$question$text
-  ev <- data[[1]]$events$type
-  pict_quest <- data[[1]]$events$task$question$photo
-  ans_type <- data[[1]]$events$task$answer$type
-  
-  for (j in seq_len(length(id) - 1)) {
-    if ((!is.na(id[j]) && (id[j] != id[j + 1])) || j == (length(id) - 1)) {
-      correct_flag <- data[[1]]$events$answer$correct[j]
-      
-      ans_value <- NA  # Default
-
-      if (ans_type[j] == "TEXT") {
-        ans_text <- data[[1]]$events$answer$text[j]
-        if (!is.na(correct_flag)) {
-          ans_value <- paste(ifelse(correct_flag == "TRUE", "Correct", "Incorrect"), ans_text)
+  #####Big table code, for selected data file
+  observeEvent(req(input$selected_data_file, input$num_value), {
+    
+    req(input$num_value && input$num_value != 0 && input$num_value > 0)
+    df_react <- reactiveVal()
+    
+    data <- loaded_json() #load one json
+    
+    id <- data[[1]]$events$task[["_id"]]
+    #print(id)
+    
+    #Building columns on types, answers and assignments
+    typ <- list()   #type of task
+    cons <- list()  #consignes -> english : instructions
+    ans <-list()   #answers -> english -> english
+    
+    #csg -> instructions in english
+    csg <- data[[1]]$events$task$question$text
+    ev <- data[[1]]$events$type #Name of the event
+    pict_quest <- data[[1]]$events$task$question$photo
+    ans_type <- data[[1]]$events$task$answer$type #what is required as the answer type
+    for (j in 1:(length(id) - 1)) {
+      if ((!is.na(id[j]) && (id[j] != id[j + 1])) || j == (length(id) - 1)) {
+        if (!is.na(id[j]) && ans_type[j] == "TEXT") {
+          if (!is.na(data[[1]]$events$answer$correct[j]) && data[[1]]$events$answer$correct[j] == "TRUE" ) {
+            ans <- append(ans, paste("Correct", data[[1]]$events$answer$text[j])) #add text in input in the answer column
+          }
+          if (!is.na(data[[1]]$events$answer$correct[j]) && data[[1]]$events$answer$correct[j] == "FALSE") {
+            ans <- append(ans, paste("Incorrect", data[[1]]$events$answer$text[j])) #add text in input in the answer column
+          }
+          if (is.na(data[[1]]$events$answer$correct[j])) {
+            ans <- append(ans, NA)
+          }
         }
-      } else if (ans_type[j] == "MULTIPLE_CHOICE_TEXT") {
-        choice_val <- data[[1]]$events$answer$selectedChoice$value[j]
-        if (!is.na(correct_flag)) {
-          ans_value <- paste(ifelse(correct_flag == "TRUE", "Correct", "Incorrect"), choice_val)
+        else if (!is.na(id[j]) && ans_type[j] == "MULTIPLE_CHOICE_TEXT") {
+          if (!is.na(data[[1]]$events$answer$correct[j]) && data[[1]]$events$answer$correct[j] == "TRUE") {
+            ans <- append(ans, paste("Correct", data[[1]]$events$answer$selectedChoice$value[j])) #add the validated answer in the answer column
+          }
+          if (!is.na(data[[1]]$events$answer$correct[j]) && data[[1]]$events$answer$correct[j] == "FALSE") {
+            ans <- append(ans, paste("Incorrect", data[[1]]$events$answer$selectedChoice$value[j])) #add the validated answer in the answer column
+          }
+          if (is.na(data[[1]]$events$answer$correct[j])) {
+            ans <- append(ans, NA)
+          }
         }
-      } else if (ans_type[j] == "NUMBER") {
-        num_val <- data[[1]]$events$answer$numberInput[j]
-        if (!is.na(correct_flag)) {
-          ans_value <- paste(ifelse(correct_flag == "TRUE", "Correct", "Incorrect"), num_val)
+        else if (!is.na(id[j]) && ans_type[j] == "NUMBER") {
+          if (!is.na(data[[1]]$events$answer$correct[j]) && data[[1]]$events$answer$correct[j] == "TRUE") {
+            ans <- append(ans, paste("Correct", data[[1]]$events$answer$numberInput[j])) #add the validated answer in the answer column
+          }
+          if (!is.na(data[[1]]$events$answer$correct[j]) && data[[1]]$events$answer$correct[j] == "FALSE") {
+            ans <- append(ans, paste("Incorrect", data[[1]]$events$answer$numberInput[j])) #add the validated answer in the answer column
+          }
+          if (is.na(data[[1]]$events$answer$correct[j])) {
+            ans <- append(ans, NA)
+          }
         }
-      } else {
-        # Fallback for unknown types
-        if (!is.null(correct_flag)) {
-          ans_value <- ifelse(correct_flag == "TRUE", "Correct", "Incorrect")
+        else {
+          if (length(data[[1]]$events$answer$correct[j]) != 0) {
+            if (!is.na(data[[1]]$events$answer$correct[j]) && data[[1]]$events$answer$correct[j] == "TRUE") {
+              ans <- append(ans, "Correct")
+            }
+            if (!is.na(data[[1]]$events$answer$correct[j]) && data[[1]]$events$answer$correct[j] == "FALSE") {
+              ans <- append(ans, "Incorrect")
+            }
+            if (is.na(data[[1]]$events$answer$correct[j])) {
+              ans <- append(ans, NA)
+            }
+          }
+          else {
+            if (!is.na(data[[1]]$events$correct[j]) && data[[1]]$events$correct[j] == "TRUE") {
+              ans <- append(ans, "Correct")
+            }
+            if (!is.na(data[[1]]$events$correct[j]) && data[[1]]$events$correct[j] == "FALSE") {
+              ans <- append(ans, "Incorrect")
+            }
+            if (is.na(data[[1]]$events$correct[j])) {
+              ans <- append(ans, NA)
+            }
+          }
         }
+        typ <- append(typ, data[[1]]$events$task$type[j])
+        cons <- append(cons, csg[j])
       }
-
-      ans <- append(ans, ans_value)
-      typ <- append(typ, data[[1]]$events$task$type[j])
-      cons <- append(cons, csg[j])
     }
-  }
-
     # print(cons)
     # print(typ)
     #print(cbind(data[[1]]$events$task$type, data[[1]]$events$correct,data[[1]]$events$answer$correct))
@@ -731,16 +693,14 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     accuracy <- list()
     task_number <- data[[1]]$waypoints$taskNo #Task number
     for (i in 1:length(task_number)) {
-      if (!is.null(task_number[i])) {
-        if (task_number[i] == input$num_value) {
-          traj_lng <- append(traj_lng, data[[1]]$waypoints$position$coords$longitude[i])
-          traj_lat <- append(traj_lat, data[[1]]$waypoints$position$coords$latitude[i])
-          if (length(data[[1]]$waypoints$position$coords$accuracy) != 0) {
-            accuracy <- append(accuracy, data[[1]]$waypoints$position$coords$accuracy[i]) #accuracy on coordinates
-          }
-          else {
-            accuracy <- append(accuracy, 1)
-          }
+      if (task_number[i] == input$num_value) {
+        traj_lng <- append(traj_lng, data[[1]]$waypoints$position$coords$longitude[i])
+        traj_lat <- append(traj_lat, data[[1]]$waypoints$position$coords$latitude[i])
+        if (length(data[[1]]$waypoints$position$coords$accuracy) != 0) {
+          accuracy <- append(accuracy, data[[1]]$waypoints$position$coords$accuracy[i]) #accuracy on coordinates
+        }
+        else {
+          accuracy <- append(accuracy, 1)
         }
       }
     }
@@ -871,9 +831,16 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     df_react(df)
     
-    output$iris_data <- renderDT({
-      df
+    observe({
+      updateNumericInput(session, "num_value", 
+                         max = nrow(df_react()))
     })
+    
+    output$iris_data <- renderDT({
+      df_react()
+    })
+    
+    
     
     
     # create icons (from Jakub's code)
@@ -1956,9 +1923,18 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     df_react(df)
     
-    output$iris_data <- renderDT({
-      df
+    
+    observe({
+      updateNumericInput(session, "num_value", 
+                         max = nrow(df_react()))
     })
+    
+    
+    output$iris_data <- renderDT({
+      df_react()
+    })
+    
+    
     
     
     # create icons (from Jakub's code)
