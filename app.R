@@ -114,6 +114,29 @@ ui <- page_sidebar(
     #inlineDiv {
       display: inline-block;
     }
+
+    /* Default (desktop) sidebar: fixed width */
+    .bslib-page-sidebar .sidebar {
+      flex: 0 0 300px !important;
+      max-width: 300px !important;
+    }
+
+    /* On tablets (portrait, e.g. iPad ≤ 1024px), sidebar smaller */
+    @media (max-width: 1024px) {
+      .bslib-page-sidebar .sidebar {
+        flex: 0 0 220px !important;
+        max-width: 220px !important;
+      }
+    }
+
+    /* On very small screens (phones ≤ 768px), sidebar takes full width (collapses on top) */
+    @media (max-width: 768px) {
+      .bslib-page-sidebar .sidebar {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+      }
+    }
+
   '))
   ),
   
@@ -122,7 +145,7 @@ ui <- page_sidebar(
   # Sidebar with collapsible toggle
   
   sidebar = sidebar(
-    width = "400px",
+    width = "300px",
     radioButtons("theme", "Choose Theme:",
                  choices = c("Light", "Dark"),
                  inline = TRUE,
@@ -169,16 +192,16 @@ ui <- page_sidebar(
             ')
             )
           ),
-          actionButton("reset", "Reset Selection", icon = icon("refresh"), style = "margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
+          actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
           textOutput("info_download"),
-          downloadButton("download_json", "Download JSON", icon = icon("download"), style = "margin-top: 10px; margin-bottom: 15px;")
+          actionButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;")
         )
       ),
     
     
     #filter 2 - ID - 2nd div
     div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-        numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 100)
+        numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 1)
     ),
 
     div(
@@ -211,7 +234,7 @@ ui <- page_sidebar(
                               card(h4("Answer and error for direction task"), tableOutput('cmp_table2'), downloadButton('save_table2', 'Save to csv'), style = "margin-top: 10px")
                               ),
              ),
-    tabPanel('Statistics per task', h3("Statistics"),uiOutput("file_selector_ui2"), textOutput("graphLegend"),
+    tabPanel('Statistics', h3("Statistics"),uiOutput("file_selector_ui2"), textOutput("graphLegend"),
              #if the task category is navigation
              conditionalPanel(condition = "output.graphLegend == 'Task type: Navigation to flag' || output.graphLegend == 'Task type: Navigation with arrow' || output.graphLegend == 'Task type: Navigation via text' || output.graphLegend == 'Task type: Navigation via photo'",
                               selectInput(
@@ -871,8 +894,13 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     df_react(df)
     
+    observe({
+      updateNumericInput(session, "num_value", 
+                         max = nrow(df_react()))
+    })
+    
     output$iris_data <- renderDT({
-      df
+      df_react()
     })
     
     
@@ -1956,8 +1984,13 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     df_react(df)
     
+    observe({
+      updateNumericInput(session, "num_value", 
+                         max = nrow(df_react()))
+    })
+    
     output$iris_data <- renderDT({
-      df
+      df_react()
     })
     
     
