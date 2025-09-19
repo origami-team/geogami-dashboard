@@ -2,12 +2,16 @@ FROM rocker/shiny:latest
 
 # Install system libraries required by leaflet and other packages
 RUN apt-get update && apt-get install -y \
+    cmake \
     libudunits2-dev \
     libgdal-dev \
     libgeos-dev \
     libproj-dev \
     libcurl4-openssl-dev \
-    libssl-dev
+    libssl-dev \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install R packages
 RUN R -e "install.packages(c('shiny', 'shinythemes', 'DT', 'wordcloud2', 'ggplot2', 'stringr', 'dplyr', 'leaflet', 'bslib', 'htmlwidgets', 'httr', 'jsonlite'), repos='http://cran.rstudio.com/')"
