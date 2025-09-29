@@ -136,7 +136,20 @@ ui <- page_sidebar(
         max-width: 100% !important;
       }
     }
+    .selectize-control {
+      width: 100% !important;
+    }
+    .selectize-input {
+      width: 100% !important;
+    }
+    
 
+    /* Hover effect on main tabs */
+    .nav-tabs > li > a:hover {
+      background-color: #27E7F5 !important;  /* yellow on hover */
+      color: #000 !important;
+      border: 1px solid #ffc107;
+    }
   '))
   ),
   
@@ -212,10 +225,31 @@ ui <- page_sidebar(
   
   # Main tabs
   tabsetPanel(
+        div(style = "min-width: 300px;", uiOutput("task_id_selector")),
+        div(style = "min-width: 300px;", uiOutput("file_selector_ui"))
+      div(
+        style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
+             margin-top: 20px; margin-bottom: 15px;
+             border: 1px solid #ccc; padding: 10px;",
         div(style = "min-width: 300px;", numericInput("num_value", "Selected Tasks:", value = 1, min = 1, max = 1)),
+        div(style = "min-width: 300px;", uiOutput("file_selector_ui3"))
+        style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
+             margin-top: 20px; margin-bottom: 15px;
+             border: 1px solid #ccc; padding: 10px;",
         div(style = "min-width: 300px;", numericInput("num_value_pictures", "Selected Tasks:", value = 1, min = 1, max = 1)),
+        div(style = "min-width: 300px;", uiOutput("file_selector_ui4"))
+        style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
+           margin-top: 20px; margin-bottom: 15px;
+           border: 1px solid #ccc; padding: 10px;",
+        div(style = "min-width: 300px; max-width: 350px;", 
             numericInput("num_value_comparison", "Selected Tasks:", value = 1, min = 1, max = 1)
+        div(style = "flex: 1; max-width: 700px;", 
+        style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
+             margin-top: 20px; margin-bottom: 15px;
+             border: 1px solid #ccc; padding: 10px;",
+        div(style = "min-width: 300px;  max-width: 350px;", 
             numericInput("num_value_Statistics", "Selected Tasks:", value = 1, min = 1, max = 1)
+        div(style = "flex: 1; max-width: 700px;", 
 )
 
 
