@@ -2281,22 +2281,23 @@ observeEvent(req(input$selected_data_file, input$num_value), {
   
   
   #Download big table
-  output$save_data <- downloadHandler(
-    filename = function(){
-      paste("data_", Sys.Date(), ".csv", sep="")
-    },
-    content = function(file){
-      write.csv(df_react(), file)
-    }
-  )
+  all_ids <- c("num_value", "num_value_pictures", "num_value_comparison", "num_value_Statistics")
+  #NOTE : num_value is the important variable, all of the other stored elements are triggered because of 'num_value'
   
-  output$save_big_table <- renderUI({
-    req(input$selected_data_file)
-    
-    if (length(input$selected_data_file) > 0 && input$selected_data_file != "") {
-      downloadButton('save_data', 'Save to csv')
-    }
-  })
+  for (id in all_ids) {
+    local({
+      this_id <- id
+      observeEvent(input[[this_id]], {
+        val <- input[[this_id]]
+        if (is.null(val)) return()
+        
+        for (other in setdiff(all_ids, this_id)) {
+          if (is.null(input[[other]]) || !identical(val, input[[other]])) {
+            updateNumericInput(session, other, value = val)
+          }
+        }
+      }, ignoreInit = TRUE, ignoreNULL = TRUE)
+    })
   
 }
 
