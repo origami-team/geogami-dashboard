@@ -225,8 +225,8 @@ ui <- page_sidebar(
   
   # Main tabs
   tabsetPanel(
-        div(style = "min-width: 300px;", uiOutput("task_id_selector")),
-        div(style = "min-width: 300px;", uiOutput("file_selector_ui"))
+        uiOutput("task_id_selector")),
+        uiOutput("file_selector_ui"))
       div(
         style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
              margin-top: 20px; margin-bottom: 15px;
@@ -897,6 +897,82 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     output$iris_data <- renderDT({
       df_react()
     })
+    #-----------all tasks - id checkbox filter starts --------------------------------
+    output$task_id_selector <- renderUI({
+      req(df_react())
+      df <- df_react()
+      
+      task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
+      
+      tagList(
+        selectizeInput(
+          "selected_task_ids",
+          "Filter by Task ID:",
+          choices = task_ids,
+          selected = task_ids,   # initially all
+          multiple = TRUE,
+          options = list(plugins = list('remove_button'))
+        ),
+        # Add two action buttons below the dropdown
+        actionButton("select_all_tasks", "Select All"),
+        actionButton("deselect_all_tasks", "Reset")
+      )
+    })
+    
+    # Filtered data
+    filtered_df <- reactive({
+      req(df_react())
+      df <- df_react()
+      
+      if (is.null(input$selected_task_ids) || length(input$selected_task_ids) == 0) {
+        return(df)   # if none selected, show all
+      }
+      
+      df[input$selected_task_ids, , drop = FALSE]   # subset by row numbers
+    })
+    
+    # Show table
+    output$iris_data <- renderDT({
+      filtered_df()
+    }, options = list(pageLength = 10))
+    
+    #---------logic for select/deselect all starts ----------------------
+    observeEvent(input$select_all_tasks, {
+      req(df_react())
+      task_ids <- seq_len(nrow(df_react()))
+      updateSelectizeInput(session, "selected_task_ids", selected = task_ids)
+    })
+    
+    observeEvent(input$deselect_all_tasks, {
+      updateSelectizeInput(session, "selected_task_ids", selected = character(0))
+    })
+    
+    #---------logic for select/deselect all ends ----------------------
+    
+    #---------task filter id for all tasks ends------------------------------------
+    
+    
+    # Download filtered big table
+    output$save_data <- downloadHandler(
+      filename = function(){
+        paste("data_", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file){
+        # use the filtered reactive df
+        write.csv(filtered_df(), file, row.names = FALSE)
+      }
+    )
+    
+    output$save_big_table <- renderUI({
+      req(filtered_df())
+      
+      if (nrow(filtered_df()) > 0) {
+        downloadButton('save_data', 'Save to CSV')
+      }
+    })
+    
+    
+    
     
     
     # create icons (from Jakub's code)
@@ -2002,6 +2078,81 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     output$iris_data <- renderDT({
       df_react()
     })
+    #-----------all tasks - id checkbox filter starts --------------------------------
+    output$task_id_selector <- renderUI({
+      req(df_react())
+      df <- df_react()
+      
+      task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
+      
+      tagList(
+        selectizeInput(
+          "selected_task_ids",
+          "Filter by Task ID:",
+          choices = task_ids,
+          selected = task_ids,   # initially all
+          multiple = TRUE,
+          options = list(plugins = list('remove_button'))
+        ),
+        # Add two action buttons below the dropdown
+        actionButton("select_all_tasks", "Select All"),
+        actionButton("deselect_all_tasks", "Deselect All")
+      )
+    })
+    
+    # Filtered data
+    filtered_df <- reactive({
+      req(df_react())
+      df <- df_react()
+      
+      if (is.null(input$selected_task_ids) || length(input$selected_task_ids) == 0) {
+        return(df)   # if none selected, show all
+      }
+      
+      df[input$selected_task_ids, , drop = FALSE]   # subset by row numbers
+    })
+    
+    # Show table
+    output$iris_data <- renderDT({
+      filtered_df()
+    }, options = list(pageLength = 10))
+    
+    #---------logic for select/deselect all starts ----------------------
+    observeEvent(input$select_all_tasks, {
+      req(df_react())
+      task_ids <- seq_len(nrow(df_react()))
+      updateSelectizeInput(session, "selected_task_ids", selected = task_ids)
+    })
+    
+    observeEvent(input$deselect_all_tasks, {
+      updateSelectizeInput(session, "selected_task_ids", selected = character(0))
+    })
+    
+    #---------logic for select/deselect all ends ----------------------
+    
+    #---------task filter id for all tasks ends------------------------------------
+    
+    
+    #DOWNLOAD FILTERED BIG TABLE - FOR SINGLE FILE UPLOAD..STARTS-----------------------------
+    output$save_data <- downloadHandler(
+      filename = function(){
+        paste("data_", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file){
+        # use the filtered reactive df
+        write.csv(filtered_df(), file, row.names = FALSE)
+      }
+    )
+    
+    output$save_big_table <- renderUI({
+      req(filtered_df())
+      
+      if (nrow(filtered_df()) > 0) {
+        downloadButton('save_data', 'Save to CSV')
+      }
+    })
+    # DOWNLOAD FILTERED BIG TABLE - FOR SINGLE FILE UPLOAD.. ENDS--------------------------
+    
     
     
     # create icons (from Jakub's code)
