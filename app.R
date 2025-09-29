@@ -200,10 +200,10 @@ ui <- page_sidebar(
     
     
     #filter 2 - ID - 2nd div
-    div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-        numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 1)
-    ),
-
+    # div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
+    #     numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 1)
+    # ),
+    
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
       "Version 1.1.1"
@@ -212,64 +212,10 @@ ui <- page_sidebar(
   
   # Main tabs
   tabsetPanel(
-    tabPanel('All tasks', uiOutput("file_selector_ui"),
-             uiOutput("player_info_box"),
-             DTOutput('iris_data'),
-             div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                 uiOutput('save_big_table'))),
-    tabPanel('Map', h3("Maps"), card(uiOutput("file_selector_ui3"), textOutput("mapLegend"), div(id="map", leafletOutput("map"),  style = "margin-top: 5px"),
-             div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                 downloadButton('downloadMap','Save the map')), full_screen = TRUE)),
-    tabPanel('Pictures', h3("Uploaded Photos"),
-             card(uiOutput("file_selector_ui4"),
-               uiOutput("photo_display"),
-               full_screen = TRUE
-             )
-    ),
-    tabPanel('All plays', uiOutput("file_selector_ui1"), textOutput("tabLegend"),
-             conditionalPanel(condition = "output.tabLegend == 'Task type: Navigation to flag' || output.tabLegend == 'Task type: Navigation with arrow' || output.tabLegend == 'Task type: Navigation via text' || output.tabLegend == 'Task type: Navigation via photo'",
-                              card(h4("Route length versus time"), tableOutput('cmp_table1'), downloadButton('save_table1', 'Save to csv'), style = "margin-top: 10px"),
-                              ),
-             conditionalPanel(condition = "output.tabLegend == 'Task type: Direction determination'",
-                              card(h4("Answer and error for direction task"), tableOutput('cmp_table2'), downloadButton('save_table2', 'Save to csv'), style = "margin-top: 10px")
-                              ),
-             ),
-    tabPanel('Statistics', h3("Statistics"),uiOutput("file_selector_ui2"), textOutput("graphLegend"),
-             #if the task category is navigation
-             conditionalPanel(condition = "output.graphLegend == 'Task type: Navigation to flag' || output.graphLegend == 'Task type: Navigation with arrow' || output.graphLegend == 'Task type: Navigation via text' || output.graphLegend == 'Task type: Navigation via photo'",
-                              selectInput(
-                                inputId = "graph_filter",
-                                label = "Choose graphic to display:",
-                                choices = c("Time VS Distance","Answer & Error"),
-                                selected = c("Answer & Error")
-                              ), conditionalPanel(
-                                condition = "input.graph_filter == 'Answer & Error'",
-                                card(card_header("Pie chart") , full_screen = TRUE, plotOutput('pie_chart'), 
-                                     div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                                     downloadButton('save_picture','Save to png')))
-                              ), conditionalPanel(
-                                condition = "input.graph_filter == 'Time VS Distance'",
-                                card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('time_chart'), 
-                                     div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                                     downloadButton('save_time_chart','Save to png')))
-                              )
-                              ),
-             #else, for the other tasks
-             conditionalPanel(condition = "output.graphLegend == 'Task type: Direction determination' || output.graphLegend == 'Task type: Free' || output.graphLegend == 'Task type: Self location' || output.graphLegend == 'Task type: Object location'",
-                              selectInput(
-                                inputId = "graph_filter2",
-                                label = "Choose graphic to display:",
-                                choices = c("Answer & Error"),
-                                selected = c("Answer & Error")
-                              ), conditionalPanel(
-                                condition = "input.graph_filter2 == 'Answer & Error'",
-                                card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('pie_chart2'),
-                                    div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                                    downloadButton('save_picture2','Save to png')))
-                              ),
-                              ),
-            )
-  )
+        div(style = "min-width: 300px;", numericInput("num_value", "Selected Tasks:", value = 1, min = 1, max = 1)),
+        div(style = "min-width: 300px;", numericInput("num_value_pictures", "Selected Tasks:", value = 1, min = 1, max = 1)),
+            numericInput("num_value_comparison", "Selected Tasks:", value = 1, min = 1, max = 1)
+            numericInput("num_value_Statistics", "Selected Tasks:", value = 1, min = 1, max = 1)
 )
 
 
@@ -896,6 +842,21 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     observe({
       updateNumericInput(session, "num_value", 
+                         max = nrow(df_react()))
+    })
+    
+    observe({
+      updateNumericInput(session, "num_value_pictures", 
+                         max = nrow(df_react()))
+    })
+    
+    observe({
+      updateNumericInput(session, "num_value_comparison", 
+                         max = nrow(df_react()))
+    })
+    
+    observe({
+      updateNumericInput(session, "num_value_Statistics", 
                          max = nrow(df_react()))
     })
     
@@ -1988,6 +1949,21 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       updateNumericInput(session, "num_value", 
                          max = nrow(df_react()))
     })
+    observe({
+      updateNumericInput(session, "num_value_pictures", 
+                         max = nrow(df_react()))
+    })
+    
+    observe({
+      updateNumericInput(session, "num_value_comparison", 
+                         max = nrow(df_react()))
+    })
+    
+    observe({
+      updateNumericInput(session, "num_value_Statistics", 
+                         max = nrow(df_react()))
+    })
+    
     
     output$iris_data <- renderDT({
       df_react()
