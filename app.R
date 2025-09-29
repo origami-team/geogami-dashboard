@@ -1042,7 +1042,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       if ((!is.na(id[i]) && (i != 1) && (id[i] != id[i + 1])) || i == (length(id) - 1)) {
         cou <- cou + 1
         pict <- append(pict, unlist(data[[1]]$events$task$question$photo[[i]]))
-        ans_photo <- append(ans_photo, unlist(data[[1]]$events$answer$photo$changingThisBreaksApplicationSecurity[[i]]))
+        ans_photo <- append(ans_photo, unlist(data[[1]]$events$answer$photo[[i]]))
       }
     }
     
