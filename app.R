@@ -137,6 +137,23 @@ ui <- page_sidebar(
       }
     }
 
+    .selectize-control {
+      width: 100% !important;
+    }
+    .selectize-input {
+      width: 100% !important;
+    }
+    
+
+    /* Hover effect on main tabs */
+    .nav-tabs > li > a:hover {
+      background-color: #27E7F5 !important;  /* yellow on hover */
+      color: #000 !important;
+      border: 1px solid #ffc107;
+    }
+
+    
+
   '))
   ),
   
@@ -200,41 +217,118 @@ ui <- page_sidebar(
     
     
     #filter 2 - ID - 2nd div
-    div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-        numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 1)
-    ),
+    # div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
+    #     numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 1)
+    # ),
 
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
-      "Version 1.1.2 - 29.09.2025"
+      "Version 1.1.2 - 13:53 29.09.2025"
     )
   ),
   
   # Main tabs
   tabsetPanel(
-    tabPanel('All tasks', uiOutput("file_selector_ui"),
+    tabPanel(
+      'All tasks',
+      div(
+        style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
+             margin-top: 20px; margin-bottom: 15px;
+             border: 1px solid #ccc; padding: 10px;",
+        # Task filter
+        div(style = "min-width: 300px;", 
+        uiOutput("task_id_selector")),
+        
+        # Player selector
+        div(style = "min-width: 300px;", 
+        uiOutput("file_selector_ui"))
+      ),
+      
              uiOutput("player_info_box"),
              DTOutput('iris_data'),
-             div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                 uiOutput('save_big_table'))),
-    tabPanel('Map', h3("Maps"), card(uiOutput("file_selector_ui3"), textOutput("mapLegend"), div(id="map", leafletOutput("map"),  style = "margin-top: 5px"),
-             div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                 downloadButton('downloadMap','Save the map')), full_screen = TRUE)),
-    tabPanel('Pictures', h3("Uploaded Photos"),
-             card(uiOutput("file_selector_ui4"),
-               uiOutput("photo_display"),
-               full_screen = TRUE
-             )
+      div(
+        style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+        uiOutput('save_big_table')
+      )
     ),
-    tabPanel('All plays', uiOutput("file_selector_ui1"), textOutput("tabLegend"),
-             conditionalPanel(condition = "output.tabLegend == 'Task type: Navigation to flag' || output.tabLegend == 'Task type: Navigation with arrow' || output.tabLegend == 'Task type: Navigation via text' || output.tabLegend == 'Task type: Navigation via photo'",
-                              card(h4("Route length versus time"), tableOutput('cmp_table1'), downloadButton('save_table1', 'Save to csv'), style = "margin-top: 10px"),
+    
+    tabPanel(
+      'Map',
+      div(
+        style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
+             margin-top: 20px; margin-bottom: 15px;
+             border: 1px solid #ccc; padding: 10px;",
+        div(style = "min-width: 300px;", numericInput("num_value", "Selected Tasks:", value = 1, min = 1, max = 1)),
+        div(style = "min-width: 300px;", uiOutput("file_selector_ui3"))
+      ),
+      textOutput("mapLegend"),
+      div(id="map", leafletOutput("map"), style = "margin-top: 5px"),
+             div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+          downloadButton('downloadMap','Save the map'), full_screen = TRUE)
+    ),
+    tabPanel(
+      'Pictures',
+      div(
+        style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
+             margin-top: 20px; margin-bottom: 15px;
+             border: 1px solid #ccc; padding: 10px;",
+        div(style = "min-width: 300px;", numericInput("num_value_pictures", "Selected Tasks:", value = 1, min = 1, max = 1)),
+        div(style = "min-width: 300px;", uiOutput("file_selector_ui4"))
+      ),
+      card(uiOutput("photo_display"))
+    ),
+    tabPanel(
+      'Compare Players',
+      div(
+        style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
+           margin-top: 20px; margin-bottom: 15px;
+           border: 1px solid #ccc; padding: 10px;",
+        div(style = "min-width: 300px; max-width: 350px;", 
+            numericInput("num_value_comparison", "Selected Tasks:", value = 1, min = 1, max = 1)
+        ),
+        div(style = "flex: 1; max-width: 700px;", 
+            uiOutput("file_selector_ui1")
+        )
+        
+        #NOTE FOR SELECTIZE INPUT HANDLING THE MAXIMUM WIDTH OF CHOSEN PLAYERS IN 'COMPARISON' FROM THE ABOVE  - ADDED THE CODE WRITTEN BELOW IN THE CSS TAGS$HEAD$STYLE ABOVE,
+        # .selectize-control {
+        #   width: 100% !important;
+        # }
+        # .selectize-input {
+        #   width: 100% !important;
+        # }
+      ),
+      textOutput("tabLegend"),
+      conditionalPanel(
+        condition = "output.tabLegend == 'Task type: Navigation to flag' || output.tabLegend == 'Task type: Navigation with arrow' || output.tabLegend == 'Task type: Navigation via text' || output.tabLegend == 'Task type: Navigation via photo'",
+        card(h4("Route length versus time"), tableOutput('cmp_table1'), downloadButton('save_table1', 'Save to csv'), style = "margin-top: 10px")
                               ),
-             conditionalPanel(condition = "output.tabLegend == 'Task type: Direction determination'",
+      conditionalPanel(
+        condition = "output.tabLegend == 'Task type: Direction determination'",
                               card(h4("Answer and error for direction task"), tableOutput('cmp_table2'), downloadButton('save_table2', 'Save to csv'), style = "margin-top: 10px")
-                              ),
+      )
              ),
-    tabPanel('Statistics', h3("Statistics"),uiOutput("file_selector_ui2"), textOutput("graphLegend"),
+    tabPanel(
+      'Statistics',
+      div(
+        style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
+             margin-top: 20px; margin-bottom: 15px;
+             border: 1px solid #ccc; padding: 10px;",
+        div(style = "min-width: 300px;  max-width: 350px;", 
+            numericInput("num_value_Statistics", "Selected Tasks:", value = 1, min = 1, max = 1)
+        ),
+        div(style = "flex: 1; max-width: 700px;", 
+            uiOutput("file_selector_ui2")
+        )
+      ), 
+      # .selectize-control {
+      #   width: 100% !important;
+      # }
+      # .selectize-input {
+      #   width: 100% !important;
+      # }
+      
+      textOutput("graphLegend"),
              #if the task category is navigation
              conditionalPanel(condition = "output.graphLegend == 'Task type: Navigation to flag' || output.graphLegend == 'Task type: Navigation with arrow' || output.graphLegend == 'Task type: Navigation via text' || output.graphLegend == 'Task type: Navigation via photo'",
                               selectInput(
@@ -398,10 +492,11 @@ server <- function(input, output, session) {
   output$file_selector_ui <- renderUI({
     req(input$selected_files)
 
-    selectInput("selected_data_file",
-                "Choose file to view data:",
+    selectizeInput("selected_data_file",
+                   "Selected Players:",
                 choices = input$selected_files,
-                selected = input$selected_files[1])
+                   selected = input$selected_files[1],
+                   multiple = FALSE)
   })
   
   ### 7. Reactive: load selected single file data
@@ -449,45 +544,115 @@ server <- function(input, output, session) {
   })
 
   ### 9. UI: multiple file selector for comparison (tables, graphics, maps, photos)
+  # UI for Compare Players - with select/deselect buttons
   output$file_selector_ui1 <- renderUI({
     req(input$selected_files)
 
-    selectInput("selected_multiple_files", 
-                "Choose file to compare:", 
+    tagList(
+      selectizeInput(
+        "selected_multiple_files", 
+        "Selected Players:", 
                 choices = input$selected_files,
                 selected = input$selected_files,
-                multiple = TRUE)
+        multiple = TRUE,
+        options = list(
+          plugins = list('remove_button')
+        )
+      ),
+      # Add select/deselect buttons
+      actionButton("select_all_players", "Select All"),
+      actionButton("deselect_all_players", "Reset")
+    )
   })
+  
+  
+  ####-------------'select and deselect all' buttons logic for file_selector_ui 1 that is 'compare' tab------------
+  # Select all players
+  observeEvent(input$select_all_players, {
+    req(input$selected_files)
+    updateSelectizeInput(
+      session,
+      "selected_multiple_files",
+      selected = input$selected_files
+    )
+  })
+  
+  # Deselect all players
+  observeEvent(input$deselect_all_players, {
+    updateSelectizeInput(
+      session,
+      "selected_multiple_files",
+      selected = character(0)
+    )
+  })
+  ####-------------'select and deselect all' buttons logic for file_selector_ui 1 that is 'compare' tab ENDS------------
+  
+  
   
   ##### Filters for comparing Graphics starts
   output$file_selector_ui2 <- renderUI({
     req(input$selected_files)
     
-    selectInput("selected_multiple_files", 
-                "Choose file to compare:", 
+    tagList(
+      selectizeInput(
+        "selected_multiple_files2",  
+        "Selected Players:", 
                 choices = input$selected_files,
                 selected = input$selected_files,
-                multiple = TRUE, selectize = TRUE)
+        multiple = TRUE,
+        options = list(plugins = list('remove_button'))
+      ),
+      actionButton("select_all_players2", "Select All"),
+      actionButton("deselect_all_players2", "Reset")
+    )
   })
+  
+  
+  ####-------------'select and deselect all' buttons logic for file_selector_ui2 that is 'stats' tab------------
+  # Select all players (file_selector_ui2)
+  observeEvent(input$select_all_players2, {
+    req(input$selected_files)
+    updateSelectizeInput(
+      session,
+      "selected_multiple_files2",
+      selected = input$selected_files
+    )
+  })
+  
+  # Deselect all players (file_selector_ui2)
+  observeEvent(input$deselect_all_players2, {
+    updateSelectizeInput(
+      session,
+      "selected_multiple_files2",
+      selected = character(0)
+    )
+  })
+  ####-------------'select and deselect all' buttons logic for file_selector_ui2 that is 'stats' tab ENDS------------
+  
+  
+  
+  
   
   ##### Filter for maps
   output$file_selector_ui3 <- renderUI({
     req(input$selected_files)
     
-    selectInput("selected_data_file",
-                "Choose file to view data:",
+    selectizeInput("selected_data_file",
+                   "Selected Players: ",
                 choices = input$selected_files,
-                selected = input$selected_files[1])
+                   selected = input$selected_files[1],
+                   multiple = FALSE)
   })
   
   ##### Filter for photos
   output$file_selector_ui4 <- renderUI({
     req(input$selected_files)
     
-    selectInput("selected_data_file",
-                "Choose file to view data:",
+    selectizeInput("selected_data_file",
+                   "Selected Players: ",
                 choices = input$selected_files,
-                selected = input$selected_files[1])
+                   selected = input$selected_files[1],
+                   multiple = FALSE)
   })
   
   #####Big table code
@@ -894,14 +1059,117 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     df_react(df)
     
+    # observe({
+    #   updateNumericInput(session, "num_value_tasks", 
+    #                      max = nrow(df_react()))
+    # })
+    
     observe({
       updateNumericInput(session, "num_value", 
                          max = nrow(df_react()))
     })
     
+    observe({
+      updateNumericInput(session, "num_value_pictures", 
+                         max = nrow(df_react()))
+    })
+    
+    observe({
+      updateNumericInput(session, "num_value_comparison", 
+                         max = nrow(df_react()))
+    })
+    
+    observe({
+      updateNumericInput(session, "num_value_Statistics", 
+                         max = nrow(df_react()))
+    })
+    
+    #all_ids <- c("num_value", "num_value_map", "num_value_pictures", "num_value_comparison", "num_value_Statistics")
+    #NOTE : num_value is the important variable, all of the other stored elements are triggered because of 'num_value'
+    
     output$iris_data <- renderDT({
       df_react()
     })
+    
+    
+    
+    
+    #-----------all tasks - id checkbox filter starts --------------------------------
+    output$task_id_selector <- renderUI({
+      req(df_react())
+      df <- df_react()
+      
+      task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
+      
+      tagList(
+        selectizeInput(
+          "selected_task_ids",
+          "Filter by Task ID:",
+          choices = task_ids,
+          selected = task_ids,   # initially all
+          multiple = TRUE,
+          options = list(plugins = list('remove_button'))
+        ),
+        # Add two action buttons below the dropdown
+        actionButton("select_all_tasks", "Select All"),
+        actionButton("deselect_all_tasks", "Reset")
+      )
+    })
+    
+    # Filtered data
+    filtered_df <- reactive({
+      req(df_react())
+      df <- df_react()
+      
+      if (is.null(input$selected_task_ids) || length(input$selected_task_ids) == 0) {
+        return(df)   # if none selected, show all
+      }
+      
+      df[input$selected_task_ids, , drop = FALSE]   # subset by row numbers
+    })
+    
+    # Show table
+    output$iris_data <- renderDT({
+      filtered_df()
+    }, options = list(pageLength = 10))
+    
+    #---------logic for select/deselect all starts ----------------------
+    observeEvent(input$select_all_tasks, {
+      req(df_react())
+      task_ids <- seq_len(nrow(df_react()))
+      updateSelectizeInput(session, "selected_task_ids", selected = task_ids)
+    })
+    
+    observeEvent(input$deselect_all_tasks, {
+      updateSelectizeInput(session, "selected_task_ids", selected = character(0))
+    })
+    
+    #---------logic for select/deselect all ends ----------------------
+    
+    #---------task filter id for all tasks ends------------------------------------
+    
+    
+    # Download filtered big table
+    output$save_data <- downloadHandler(
+      filename = function(){
+        paste("data_", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file){
+        # use the filtered reactive df
+        write.csv(filtered_df(), file, row.names = FALSE)
+      }
+    )
+    
+    output$save_big_table <- renderUI({
+      req(filtered_df())
+      
+      if (nrow(filtered_df()) > 0) {
+        downloadButton('save_data', 'Save to CSV')
+      }
+    })
+    
+    
+    
     
     
     # create icons (from Jakub's code)
@@ -1042,7 +1310,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       if ((!is.na(id[i]) && (i != 1) && (id[i] != id[i + 1])) || i == (length(id) - 1)) {
         cou <- cou + 1
         pict <- append(pict, unlist(data[[1]]$events$task$question$photo[[i]]))
-        ans_photo <- append(ans_photo, unlist(data[[1]]$events$answer$photo$changingThisBreaksApplicationSecurity[[i]]))
+        ans_photo <- append(ans_photo, unlist(data[[1]]$events$answer$photo[[i]]))
       }
     }
     
@@ -1984,14 +2252,116 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     df_react(df)
     
+    # observe({
+    #   updateNumericInput(session, "num_value_tasks", 
+    #                      max = nrow(df_react()))
+    # })
+    
     observe({
       updateNumericInput(session, "num_value", 
                          max = nrow(df_react()))
     })
     
+    observe({
+      updateNumericInput(session, "num_value_pictures", 
+                         max = nrow(df_react()))
+    })
+    
+    observe({
+      updateNumericInput(session, "num_value_comparison", 
+                         max = nrow(df_react()))
+    })
+    
+    observe({
+      updateNumericInput(session, "num_value_Statistics", 
+                         max = nrow(df_react()))
+    })
+    
+    #all_ids <- c("num_value", "num_value_map", "num_value_pictures", "num_value_comparison", "num_value_Statistics")
+    #NOTE : num_value is the important variable, all of the other stored elements are triggered because of 'num_value'
+    
     output$iris_data <- renderDT({
       df_react()
     })
+    
+    
+    
+    
+    #-----------all tasks - id checkbox filter starts --------------------------------
+    output$task_id_selector <- renderUI({
+      req(df_react())
+      df <- df_react()
+      
+      task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
+      
+      tagList(
+        selectizeInput(
+          "selected_task_ids",
+          "Filter by Task ID:",
+          choices = task_ids,
+          selected = task_ids,   # initially all
+          multiple = TRUE,
+          options = list(plugins = list('remove_button'))
+        ),
+        # Add two action buttons below the dropdown
+        actionButton("select_all_tasks", "Select All"),
+        actionButton("deselect_all_tasks", "Deselect All")
+      )
+    })
+    
+    # Filtered data
+    filtered_df <- reactive({
+      req(df_react())
+      df <- df_react()
+      
+      if (is.null(input$selected_task_ids) || length(input$selected_task_ids) == 0) {
+        return(df)   # if none selected, show all
+      }
+      
+      df[input$selected_task_ids, , drop = FALSE]   # subset by row numbers
+    })
+    
+    # Show table
+    output$iris_data <- renderDT({
+      filtered_df()
+    }, options = list(pageLength = 10))
+    
+    #---------logic for select/deselect all starts ----------------------
+    observeEvent(input$select_all_tasks, {
+      req(df_react())
+      task_ids <- seq_len(nrow(df_react()))
+      updateSelectizeInput(session, "selected_task_ids", selected = task_ids)
+    })
+    
+    observeEvent(input$deselect_all_tasks, {
+      updateSelectizeInput(session, "selected_task_ids", selected = character(0))
+    })
+    
+    #---------logic for select/deselect all ends ----------------------
+    
+    #---------task filter id for all tasks ends------------------------------------
+    
+    
+    #DOWNLOAD FILTERED BIG TABLE - FOR SINGLE FILE UPLOAD..STARTS-----------------------------
+    output$save_data <- downloadHandler(
+      filename = function(){
+        paste("data_", Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file){
+        # use the filtered reactive df
+        write.csv(filtered_df(), file, row.names = FALSE)
+      }
+    )
+    
+    output$save_big_table <- renderUI({
+      req(filtered_df())
+      
+      if (nrow(filtered_df()) > 0) {
+        downloadButton('save_data', 'Save to CSV')
+      }
+    })
+    # DOWNLOAD FILTERED BIG TABLE - FOR SINGLE FILE UPLOAD.. ENDS--------------------------
+    
     
     
     # create icons (from Jakub's code)
@@ -2271,22 +2641,47 @@ observeEvent(req(input$selected_data_file, input$num_value), {
   
   
   #Download big table
-  output$save_data <- downloadHandler(
-    filename = function(){
-      paste("data_", Sys.Date(), ".csv", sep="")
-    },
-    content = function(file){
-      write.csv(df_react(), file)
-    }
-  )
+  #REMOVING THE OLD BIG TABLE - COMMENTING IT FOR NOW
+  # output$save_data <- downloadHandler(
+  #   filename = function(){
+  #     paste("data_", Sys.Date(), ".csv", sep="")
+  #   },
+  #   content = function(file){
+  #     write.csv(df_react(), file)
+  #   }
+  # )
+  # 
+  # output$save_big_table <- renderUI({
+  #   req(input$selected_data_file)
+  #   
+  #   if (length(input$selected_data_file) > 0 && input$selected_data_file != "") {
+  #     downloadButton('save_data', 'Save to csv')
+  #   }
+  # })
   
-  output$save_big_table <- renderUI({
-    req(input$selected_data_file)
-    
-    if (length(input$selected_data_file) > 0 && input$selected_data_file != "") {
-      downloadButton('save_data', 'Save to csv')
-    }
-  })
+  
+  
+  all_ids <- c("num_value", "num_value_pictures", "num_value_comparison", "num_value_Statistics")
+  #NOTE : num_value is the important variable, all of the other stored elements are triggered because of 'num_value'
+  
+  for (id in all_ids) {
+    local({
+      this_id <- id
+      observeEvent(input[[this_id]], {
+        val <- input[[this_id]]
+        if (is.null(val)) return()
+        
+        for (other in setdiff(all_ids, this_id)) {
+          if (is.null(input[[other]]) || !identical(val, input[[other]])) {
+            updateNumericInput(session, other, value = val)
+          }
+        }
+      }, ignoreInit = TRUE, ignoreNULL = TRUE)
+    })
+  }
+  
+  
+  
   
 }
 
