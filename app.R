@@ -20,10 +20,10 @@ fetch_games_data_from_server <- function(url, token) {
   message("Fetched data, now processing...")
   # Adds a space between 'Bearer' and the token
   auth_header <- paste("Bearer", token)  
-  
+
   # Make the request with Authorization header
   res <- GET(url, add_headers(Authorization = auth_header))
-  
+
   # Handle the response
   if (status_code(res) == 200) {
     data <- fromJSON(content(res, "text", encoding = "UTF-8"))
@@ -167,9 +167,9 @@ ui <- page_sidebar(
                  choices = c("Light", "Dark"),
                  inline = TRUE,
                  selected = "Light"),
-    
-    # Upload JSON file section
-    div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 5px; border-radius: 5px;",
+
+     # Upload JSON file section
+     div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 5px; border-radius: 5px;",
         fileInput("uploaded_json_file", "Upload JSON file:", accept = ".json", multiple = FALSE),
     ),
     
@@ -177,11 +177,11 @@ ui <- page_sidebar(
     conditionalPanel(
       condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
       div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-          selectizeInput(
-            inputId = "selected_games",
-            label = "Select your game:",
-            choices = NULL  # Leave it empty initially
-          )
+        selectizeInput(
+        inputId = "selected_games",
+        label = "Select your game:",
+        choices = NULL  # Leave it empty initially
+        )
       )
     ),
     
@@ -212,18 +212,18 @@ ui <- page_sidebar(
           actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
           textOutput("info_download"),
           actionButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;")
-      )
-    ),
+        )
+      ),
     
     
     #filter 2 - ID - 2nd div
     # div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
     #     numericInput("num_value", "Enter a task number:", value = 1, min = 1, max = 1)
     # ),
-    
+
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
-      "Version 1.1.1"
+      "Version 1.1.2 - 13:53 29.09.2025"
     )
   ),
   
@@ -244,8 +244,8 @@ ui <- page_sidebar(
         uiOutput("file_selector_ui"))
       ),
       
-      uiOutput("player_info_box"),
-      DTOutput('iris_data'),
+             uiOutput("player_info_box"),
+             DTOutput('iris_data'),
       div(
         style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
         uiOutput('save_big_table')
@@ -263,7 +263,7 @@ ui <- page_sidebar(
       ),
       textOutput("mapLegend"),
       div(id="map", leafletOutput("map"), style = "margin-top: 5px"),
-      div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+             div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
           downloadButton('downloadMap','Save the map'), full_screen = TRUE)
     ),
     tabPanel(
@@ -302,12 +302,12 @@ ui <- page_sidebar(
       conditionalPanel(
         condition = "output.tabLegend == 'Task type: Navigation to flag' || output.tabLegend == 'Task type: Navigation with arrow' || output.tabLegend == 'Task type: Navigation via text' || output.tabLegend == 'Task type: Navigation via photo'",
         card(h4("Route length versus time"), tableOutput('cmp_table1'), downloadButton('save_table1', 'Save to csv'), style = "margin-top: 10px")
-      ),
+                              ),
       conditionalPanel(
         condition = "output.tabLegend == 'Task type: Direction determination'",
-        card(h4("Answer and error for direction task"), tableOutput('cmp_table2'), downloadButton('save_table2', 'Save to csv'), style = "margin-top: 10px")
+                              card(h4("Answer and error for direction task"), tableOutput('cmp_table2'), downloadButton('save_table2', 'Save to csv'), style = "margin-top: 10px")
       )
-    ),
+             ),
     tabPanel(
       'Statistics',
       div(
@@ -329,61 +329,61 @@ ui <- page_sidebar(
       # }
       
       textOutput("graphLegend"),
-      #if the task category is navigation
-      conditionalPanel(condition = "output.graphLegend == 'Task type: Navigation to flag' || output.graphLegend == 'Task type: Navigation with arrow' || output.graphLegend == 'Task type: Navigation via text' || output.graphLegend == 'Task type: Navigation via photo'",
-                       selectInput(
-                         inputId = "graph_filter",
-                         label = "Choose graphic to display:",
-                         choices = c("Time VS Distance","Answer & Error"),
-                         selected = c("Answer & Error")
-                       ), conditionalPanel(
-                         condition = "input.graph_filter == 'Answer & Error'",
-                         card(card_header("Pie chart") , full_screen = TRUE, plotOutput('pie_chart'), 
-                              div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                                  downloadButton('save_picture','Save to png')))
-                       ), conditionalPanel(
-                         condition = "input.graph_filter == 'Time VS Distance'",
-                         card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('time_chart'), 
-                              div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                                  downloadButton('save_time_chart','Save to png')))
-                       )
-      ),
-      #else, for the other tasks
-      conditionalPanel(condition = "output.graphLegend == 'Task type: Direction determination' || output.graphLegend == 'Task type: Free' || output.graphLegend == 'Task type: Self location' || output.graphLegend == 'Task type: Object location'",
-                       selectInput(
-                         inputId = "graph_filter2",
-                         label = "Choose graphic to display:",
-                         choices = c("Answer & Error"),
-                         selected = c("Answer & Error")
-                       ), conditionalPanel(
-                         condition = "input.graph_filter2 == 'Answer & Error'",
-                         card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('pie_chart2'),
-                              div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                                  downloadButton('save_picture2','Save to png')))
-                       ),
-      ),
-    )
+             #if the task category is navigation
+             conditionalPanel(condition = "output.graphLegend == 'Task type: Navigation to flag' || output.graphLegend == 'Task type: Navigation with arrow' || output.graphLegend == 'Task type: Navigation via text' || output.graphLegend == 'Task type: Navigation via photo'",
+                              selectInput(
+                                inputId = "graph_filter",
+                                label = "Choose graphic to display:",
+                                choices = c("Time VS Distance","Answer & Error"),
+                                selected = c("Answer & Error")
+                              ), conditionalPanel(
+                                condition = "input.graph_filter == 'Answer & Error'",
+                                card(card_header("Pie chart") , full_screen = TRUE, plotOutput('pie_chart'), 
+                                     div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+                                     downloadButton('save_picture','Save to png')))
+                              ), conditionalPanel(
+                                condition = "input.graph_filter == 'Time VS Distance'",
+                                card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('time_chart'), 
+                                     div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+                                     downloadButton('save_time_chart','Save to png')))
+                              )
+                              ),
+             #else, for the other tasks
+             conditionalPanel(condition = "output.graphLegend == 'Task type: Direction determination' || output.graphLegend == 'Task type: Free' || output.graphLegend == 'Task type: Self location' || output.graphLegend == 'Task type: Object location'",
+                              selectInput(
+                                inputId = "graph_filter2",
+                                label = "Choose graphic to display:",
+                                choices = c("Answer & Error"),
+                                selected = c("Answer & Error")
+                              ), conditionalPanel(
+                                condition = "input.graph_filter2 == 'Answer & Error'",
+                                card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('pie_chart2'),
+                                    div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+                                    downloadButton('save_picture2','Save to png')))
+                              ),
+                              ),
+            )
   )
 )
 
 
 server <- function(input, output, session) {
-  
+
   # Store selected game track data reactively
   selected_game_tracks_rv <- reactiveVal()
   # Store access token reactively
   accessToken_rv <- reactiveVal()
   track_data_rv <- reactiveVal()
   apiURL_rv <- reactiveVal("https://api.geogami.ifgi.de")
-  
+
   # Observe the URL query string for the token parameter
   observe({
     query <- parseQueryString(session$clientData$url_search)
     tokenParam <- query[["token"]]
     accessToken_rv(tokenParam)
   })
-  
-  # Theme options
+
+    # Theme options
   observe({
     if (input$theme == "Dark") {
       session$setCurrentTheme(bs_theme(bootswatch = "solar"))
@@ -391,8 +391,8 @@ server <- function(input, output, session) {
       session$setCurrentTheme(bs_theme(bootswatch = "flatly"))
     }
   })
-  
-  output$text <- renderText({
+
+    output$text <- renderText({
     paste("Current theme is:", input$theme)
   })
   
@@ -409,28 +409,28 @@ server <- function(input, output, session) {
       games_name <- games_data$name
       games_id <- games_data[["_id"]]
     }
-    
+
     ### 2. Populate select input for games
     updateSelectizeInput(session, "selected_games",
-                         choices = setNames(games_id, games_name),
-                         server = TRUE)
-    
+                          choices = setNames(games_id, games_name),
+                          server = TRUE)
+  
     output$info_download <- renderText({
-      ""
-    })
+        ""
+      })
   })
   
   ### 3. When a game is selected
   observeEvent(input$selected_games, {
     game_id <- input$selected_games
-    
+
     # update the API URL with the selected game ID
     apiUrl <- paste0(apiURL_rv(), "/track/gametracks/", game_id)
     
     # Fetch game's tracks data from API
     # Note: The token is used for authentication, ensure it is valid
     games_tracks <- fetch_games_data_from_server(apiUrl, accessToken_rv())
-    
+
     # Store in reactive value
     selected_game_tracks_rv(games_tracks)
   })
@@ -447,15 +447,15 @@ server <- function(input, output, session) {
       )
       
       updateSelectizeInput(session, "selected_files",
-                           choices = choices,
-                           server = TRUE)
-      
+                          choices = choices,
+                          server = TRUE)
+
       output$info_download <- renderText({
         ""
       })
     }
   })
-  
+
   # Download json file
   output$download_json <- downloadHandler(
     filename = function() {
@@ -465,12 +465,12 @@ server <- function(input, output, session) {
     content = function(file) {
       req(input$selected_files)  # Ensure some files are selected
       list_to_save <- track_data_rv()  # Your reactive list
-      
+
       # Save to JSON
       jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
     }
   )
-  
+
   ### 5. Reset file selector when reset button clicked
   observeEvent(input$reset, {
     tracks_data <- selected_game_tracks_rv()
@@ -482,19 +482,19 @@ server <- function(input, output, session) {
       )
       
       updateSelectizeInput(session, "selected_files",
-                           choices = choices,
-                           selected = NULL,
-                           server = TRUE)
+                          choices = choices,
+                          selected = NULL,
+                          server = TRUE)
     }
   })
-  
+
   # 6. Select single file to view
   output$file_selector_ui <- renderUI({
     req(input$selected_files)
-    
+
     selectizeInput("selected_data_file",
                    "Selected Players:",
-                   choices = input$selected_files,
+                choices = input$selected_files,
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
@@ -503,7 +503,7 @@ server <- function(input, output, session) {
   loaded_json <- reactive({
     req(input$selected_data_file)
     selected <- input$selected_data_file
-    
+
     lapply(selected, function(file) {
       track_id <- input$selected_data_file
       # Construct the API URL
@@ -514,24 +514,24 @@ server <- function(input, output, session) {
       return(track_data)
     })
   })
-  
+
   #Get the uploaded json file
   uploaded_json <- reactive({
     req(input$uploaded_json_file)
     datapaths <- input$uploaded_json_file$datapath
     
     lapply(datapaths, function(path) {
-      jsonlite::fromJSON(path)
+     jsonlite::fromJSON(path)
     })
   })
-  
+
   ### 8. Reactive: load multiple json files for comparison
   load_multiple <- reactive({
     req(input$selected_multiple_files)
-    
+
     # If multiple IDs are found, use only the last one
     sel <- input$selected_multiple_files[length(input$selected_multiple_files)]
-    
+
     lapply(sel, function(file) {
       track_id <- sel
       # Construct the API URL
@@ -542,18 +542,18 @@ server <- function(input, output, session) {
       return(track_data)
     })
   })
-  
+
   ### 9. UI: multiple file selector for comparison (tables, graphics, maps, photos)
   # UI for Compare Players - with select/deselect buttons
   output$file_selector_ui1 <- renderUI({
     req(input$selected_files)
-    
+
     tagList(
       selectizeInput(
         "selected_multiple_files", 
         "Selected Players:", 
-        choices = input$selected_files,
-        selected = input$selected_files,
+                choices = input$selected_files,
+                selected = input$selected_files,
         multiple = TRUE,
         options = list(
           plugins = list('remove_button')
@@ -597,8 +597,8 @@ server <- function(input, output, session) {
       selectizeInput(
         "selected_multiple_files2",  
         "Selected Players:", 
-        choices = input$selected_files,
-        selected = input$selected_files,
+                choices = input$selected_files,
+                selected = input$selected_files,
         multiple = TRUE,
         options = list(plugins = list('remove_button'))
       ),
@@ -639,7 +639,7 @@ server <- function(input, output, session) {
     
     selectizeInput("selected_data_file",
                    "Selected Players: ",
-                   choices = input$selected_files,
+                choices = input$selected_files,
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
@@ -650,75 +650,75 @@ server <- function(input, output, session) {
     
     selectizeInput("selected_data_file",
                    "Selected Players: ",
-                   choices = input$selected_files,
+                choices = input$selected_files,
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
   
   #####Big table code
   df_react <- reactiveVal()
+
+observeEvent(req(input$selected_data_file, input$num_value), {
+  req(input$num_value != 0 && input$num_value > 0)
   
-  observeEvent(req(input$selected_data_file, input$num_value), {
-    req(input$num_value != 0 && input$num_value > 0)
-    
-    data <- loaded_json()  # load selected JSON
-    
-    if (is.null(data) || length(data) == 0) {
-      showNotification("No data found for selected file.", type = "error")
-      return()
-    }
-    
-    # Defensive check: ensure expected structure exists
-    if (!("events" %in% names(data[[1]])) || !("task" %in% names(data[[1]]$events))) {
-      showNotification("Unexpected data format.", type = "error")
-      return()
-    }
-    
-    id <- data[[1]]$events$task[["_id"]]
-    typ <- list()
-    cons <- list()
-    ans <- list()
-    
-    # Extract reusable fields
-    csg <- data[[1]]$events$task$question$text
-    ev <- data[[1]]$events$type
-    pict_quest <- data[[1]]$events$task$question$photo
-    ans_type <- data[[1]]$events$task$answer$type
-    
-    for (j in seq_len(length(id) - 1)) {
-      if ((!is.na(id[j]) && (id[j] != id[j + 1])) || j == (length(id) - 1)) {
-        correct_flag <- data[[1]]$events$answer$correct[j]
-        
-        ans_value <- NA  # Default
-        
-        if (ans_type[j] == "TEXT") {
-          ans_text <- data[[1]]$events$answer$text[j]
-          if (!is.na(correct_flag)) {
-            ans_value <- paste(ifelse(correct_flag == "TRUE", "Correct", "Incorrect"), ans_text)
-          }
-        } else if (ans_type[j] == "MULTIPLE_CHOICE_TEXT") {
-          choice_val <- data[[1]]$events$answer$selectedChoice$value[j]
-          if (!is.na(correct_flag)) {
-            ans_value <- paste(ifelse(correct_flag == "TRUE", "Correct", "Incorrect"), choice_val)
-          }
-        } else if (ans_type[j] == "NUMBER") {
-          num_val <- data[[1]]$events$answer$numberInput[j]
-          if (!is.na(correct_flag)) {
-            ans_value <- paste(ifelse(correct_flag == "TRUE", "Correct", "Incorrect"), num_val)
-          }
-        } else {
-          # Fallback for unknown types
-          if (!is.null(correct_flag)) {
-            ans_value <- ifelse(correct_flag == "TRUE", "Correct", "Incorrect")
-          }
+  data <- loaded_json()  # load selected JSON
+  
+  if (is.null(data) || length(data) == 0) {
+    showNotification("No data found for selected file.", type = "error")
+    return()
+  }
+
+  # Defensive check: ensure expected structure exists
+  if (!("events" %in% names(data[[1]])) || !("task" %in% names(data[[1]]$events))) {
+    showNotification("Unexpected data format.", type = "error")
+    return()
+  }
+
+  id <- data[[1]]$events$task[["_id"]]
+  typ <- list()
+  cons <- list()
+  ans <- list()
+
+  # Extract reusable fields
+  csg <- data[[1]]$events$task$question$text
+  ev <- data[[1]]$events$type
+  pict_quest <- data[[1]]$events$task$question$photo
+  ans_type <- data[[1]]$events$task$answer$type
+  
+  for (j in seq_len(length(id) - 1)) {
+    if ((!is.na(id[j]) && (id[j] != id[j + 1])) || j == (length(id) - 1)) {
+      correct_flag <- data[[1]]$events$answer$correct[j]
+      
+      ans_value <- NA  # Default
+
+      if (ans_type[j] == "TEXT") {
+        ans_text <- data[[1]]$events$answer$text[j]
+        if (!is.na(correct_flag)) {
+          ans_value <- paste(ifelse(correct_flag == "TRUE", "Correct", "Incorrect"), ans_text)
         }
-        
-        ans <- append(ans, ans_value)
-        typ <- append(typ, data[[1]]$events$task$type[j])
-        cons <- append(cons, csg[j])
+      } else if (ans_type[j] == "MULTIPLE_CHOICE_TEXT") {
+        choice_val <- data[[1]]$events$answer$selectedChoice$value[j]
+        if (!is.na(correct_flag)) {
+          ans_value <- paste(ifelse(correct_flag == "TRUE", "Correct", "Incorrect"), choice_val)
+        }
+      } else if (ans_type[j] == "NUMBER") {
+        num_val <- data[[1]]$events$answer$numberInput[j]
+        if (!is.na(correct_flag)) {
+          ans_value <- paste(ifelse(correct_flag == "TRUE", "Correct", "Incorrect"), num_val)
+        }
+      } else {
+        # Fallback for unknown types
+        if (!is.null(correct_flag)) {
+          ans_value <- ifelse(correct_flag == "TRUE", "Correct", "Incorrect")
+        }
       }
+
+      ans <- append(ans, ans_value)
+      typ <- append(typ, data[[1]]$events$task$type[j])
+      cons <- append(cons, csg[j])
     }
-    
+  }
+
     # print(cons)
     # print(typ)
     #print(cbind(data[[1]]$events$task$type, data[[1]]$events$correct,data[[1]]$events$answer$correct))
@@ -2249,8 +2249,6 @@ server <- function(input, output, session) {
           h5(textOutput("overall_score"))
       )
     })
-    
-    
     
     df_react(df)
     
