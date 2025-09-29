@@ -427,47 +427,117 @@ server <- function(input, output, session) {
       return(track_data)
     })
   })
-
+  
   ### 9. UI: multiple file selector for comparison (tables, graphics, maps, photos)
+  # UI for Compare Players - with select/deselect buttons
   output$file_selector_ui1 <- renderUI({
     req(input$selected_files)
-
-    selectInput("selected_multiple_files", 
-                "Choose file to compare:", 
-                choices = input$selected_files,
-                selected = input$selected_files,
-                multiple = TRUE)
+    
+    tagList(
+      selectizeInput(
+        "selected_multiple_files", 
+        "Selected Players:", 
+        choices = input$selected_files,
+        selected = input$selected_files,
+        multiple = TRUE,
+        options = list(
+          plugins = list('remove_button')
+        )
+      ),
+      # Add select/deselect buttons
+      actionButton("select_all_players", "Select All"),
+      actionButton("deselect_all_players", "Reset")
+    )
   })
+  
+  
+  ####-------------'select and deselect all' buttons logic for file_selector_ui 1 that is 'compare' tab------------
+  # Select all players
+  observeEvent(input$select_all_players, {
+    req(input$selected_files)
+    updateSelectizeInput(
+      session,
+      "selected_multiple_files",
+      selected = input$selected_files
+    )
+  })
+  
+  # Deselect all players
+  observeEvent(input$deselect_all_players, {
+    updateSelectizeInput(
+      session,
+      "selected_multiple_files",
+      selected = character(0)
+    )
+  })
+  ####-------------'select and deselect all' buttons logic for file_selector_ui 1 that is 'compare' tab ENDS------------
+  
+  
   
   ##### Filters for comparing Graphics starts
   output$file_selector_ui2 <- renderUI({
     req(input$selected_files)
     
-    selectInput("selected_multiple_files", 
-                "Choose file to compare:", 
-                choices = input$selected_files,
-                selected = input$selected_files,
-                multiple = TRUE, selectize = TRUE)
+    tagList(
+      selectizeInput(
+        "selected_multiple_files2",  
+        "Selected Players:", 
+        choices = input$selected_files,
+        selected = input$selected_files,
+        multiple = TRUE,
+        options = list(plugins = list('remove_button'))
+      ),
+      actionButton("select_all_players2", "Select All"),
+      actionButton("deselect_all_players2", "Reset")
+    )
   })
+  
+  
+  ####-------------'select and deselect all' buttons logic for file_selector_ui2 that is 'stats' tab------------
+  # Select all players (file_selector_ui2)
+  observeEvent(input$select_all_players2, {
+    req(input$selected_files)
+    updateSelectizeInput(
+      session,
+      "selected_multiple_files2",
+      selected = input$selected_files
+    )
+  })
+  
+  # Deselect all players (file_selector_ui2)
+  observeEvent(input$deselect_all_players2, {
+    updateSelectizeInput(
+      session,
+      "selected_multiple_files2",
+      selected = character(0)
+    )
+  })
+  ####-------------'select and deselect all' buttons logic for file_selector_ui2 that is 'stats' tab ENDS------------
+  
+  
+  
+  
   
   ##### Filter for maps
   output$file_selector_ui3 <- renderUI({
     req(input$selected_files)
     
-    selectInput("selected_data_file",
-                "Choose file to view data:",
-                choices = input$selected_files,
-                selected = input$selected_files[1])
+    selectizeInput("selected_data_file",
+                   "Selected Players: ",
+                   choices = input$selected_files,
+                   selected = input$selected_files[1],
+                   multiple = FALSE)
   })
   
   ##### Filter for photos
   output$file_selector_ui4 <- renderUI({
     req(input$selected_files)
     
-    selectInput("selected_data_file",
-                "Choose file to view data:",
-                choices = input$selected_files,
-                selected = input$selected_files[1])
+    selectizeInput("selected_data_file",
+                   "Selected Players: ",
+                   choices = input$selected_files,
+                   selected = input$selected_files[1],
+                   multiple = FALSE)
   })
   
   #####Big table code
