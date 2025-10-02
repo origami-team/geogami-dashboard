@@ -1252,22 +1252,172 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     mr <- FALSE #Reinitialize variable
     # output$map <- renderLeaflet(map_shown)
+    # output$map <- renderLeaflet({
+    #   map_shown
+    #   map_shown%>%
+    #   leaflet(options = leafletOptions(minZoom = 17, maxZoom = 20)) %>%
+    #     addTiles() %>%
+    #     htmlwidgets::onRender("
+    #       function(el, x) {
+    #         var imageUrl = 'assets/vir_envs_layers/VirEnv_41.png';
+    #         var bounds = [
+    #           [0.0003628597122, 0.0002307207207],  // Southwest corner
+    #           [0.004459082914, 0.003717027207]     // Northeast corner
+    #         ];
+    #         var overlay = L.imageOverlay(imageUrl, bounds).addTo(this);
+    #         this.setView([0.0014684684685, 0.00200892857143], 17);  // (lat, lng), zoom
+    #         // Check for errors
+    #         overlay._image.onerror = function() {
+    #           alert('Failed to load image: ' + imageUrl);
+    #         };
+    #       }
+    #     ")
+    # })
+
+
+
     output$map <- renderLeaflet({
-      leaflet(options = leafletOptions(minZoom = 17, maxZoom = 20)) %>%
+  # Default empty map
+  map_shown <- leaflet() %>%
         addTiles() %>%
+    setView(lng = 7, lat = 51, zoom = 20)
+
+  # Conditions
+  if (mr == TRUE ||
+      length(ans) <= input$num_value ||
+      (length(lng_targ) == 0 && length(lng_true) == 0 && t == "theme-loc") ||
+      (length(long) == 0 && length(traj_lat) == 0 &&
+       (t %in% c("nav-flag", "nav-text", "nav-arrow", "nav-photo")))) {
+    
+    map_shown <- leaflet() %>%
+      addTiles() %>%
+      setView(lng = 7, lat = 51, zoom = 20)
+  }
+  
+  if (length(long) != 0 && length(traj_lat) == 0) {
+    map_shown <- leaflet() %>%
+      addTiles() %>%
+      addMarkers(
+        lng = unlist(long)[1],
+        lat = unlist(lati)[1],
+        icon = loc_marker_green
+      ) %>%
+      addCircles(
+        lng = unlist(long)[1],
+        lat = unlist(lati)[1],
+        radius = accuracy_rad,
+        opacity = 0.5
+      )
+  }
+  
+  if (length(long) != 0 && length(traj_lat) != 0) {
+    map_shown <- leaflet() %>%
+      addTiles() %>%
+      addMarkers(
+        lng = unlist(long)[1],
+        lat = unlist(lati)[1],
+        icon = loc_marker_green
+      ) %>%
+      addCircles(
+        lng = unlist(long)[1],
+        lat = unlist(lati)[1],
+        radius = accuracy_rad,
+        opacity = 0.5
+      ) %>%
+      addPolylines(
+        lng = unlist(traj_lng),
+        lat = unlist(traj_lat),
+        color = "red", weight = 2, opacity = 1, stroke = TRUE
+      )
+  }
+  
+  if (length(dr_point_lng) != 0) {
+    map_shown <- leaflet() %>%
+      addTiles() %>%
+      addPolylines(
+        lng = unlist(dr_point_lng),
+        lat = unlist(dr_point_lat),
+        color = "red", weight = 2, opacity = 1, stroke = TRUE
+      )
+  }
+  
+  if (length(lng_targ) != 0 && length(lng_true) != 0) {
+    map_shown <- leaflet() %>%
+      addTiles() %>%
+      addMarkers(
+        lng = tail(unlist(lng_targ), 1),
+        lat = tail(unlist(lat_targ), 1),
+        icon = loc_marker
+      ) %>%
+      addMarkers(
+        lng = tail(unlist(lng_true), 1),
+        lat = tail(unlist(lat_true), 1),
+        icon = loc_marker_green
+      ) %>%
+      addCircles(
+        lng = tail(unlist(lng_true), 1),
+        lat = tail(unlist(lat_true), 1),
+        radius = accuracy_rad
+      )
+  }
+  
+  if (length(lng_targ) == 0 && length(lng_true) != 0) {
+    map_shown <- leaflet() %>%
+      addTiles() %>%
+      addMarkers(
+        lng = tail(unlist(lng_true), 1),
+        lat = tail(unlist(lat_true), 1),
+        icon = loc_marker_green
+      ) %>%
+      addCircles(
+        lng = tail(unlist(lng_true), 1),
+        lat = tail(unlist(lat_true), 1),
+        radius = accuracy_rad
+      )
+  }
+  
+  if (length(lng_poly) != 0 && length(lng_ans_obj) == 0) {
+    map_shown <- leaflet() %>%
+      addTiles() %>%
+      addPolygons(
+        lng = unlist(lng_poly),
+        lat = unlist(lat_poly),
+        color = "blue", fillColor = "grey", weight = 2, opacity = 1
+      )
+  }
+  
+  if (length(lng_poly) != 0 && length(lng_ans_obj) != 0) {
+    map_shown <- leaflet() %>%
+      addTiles() %>%
+      addMarkers(
+        lng = tail(unlist(lng_ans_obj), 1),
+        lat = tail(unlist(lat_ans_obj), 1),
+        icon = loc_marker
+      ) %>%
+      addPolygons(
+        lng = unlist(lng_poly),
+        lat = unlist(lat_poly),
+        color = "blue", fillColor = "grey", weight = 2, opacity = 1
+      )
+  }
+
+  # Add overlay with zIndex control
+  map_shown %>%
         htmlwidgets::onRender("
           function(el, x) {
-            var imageUrl = 'assets/vir_envs_layers/VirEnv_41.png';
+        var map = this;
+        map.options.minZoom = 18;
+        map.options.maxZoom = 20;
+        map.on('zoomend', function() {
+                console.log('Current zoom level:', map.getZoom());
+              });
+        var imageUrl = 'assets/vir_envs_layers/VirEnv_40_f1.png';
             var bounds = [
-              [0.0003628597122, 0.0002307207207],  // Southwest corner
-              [0.004459082914, 0.003717027207]     // Northeast corner
+          [- 0.0002, - 0.0002],  // Southwest [lat, lng]
+          [0.00055, 0.00055]     // Northeast [lat, lng]
             ];
-            var overlay = L.imageOverlay(imageUrl, bounds).addTo(this);
-            this.setView([0.0014684684685, 0.00200892857143], 17);  // (lat, lng), zoom
-            // Check for errors
-            overlay._image.onerror = function() {
-              alert('Failed to load image: ' + imageUrl);
-            };
+        var overlay = L.imageOverlay(imageUrl, bounds, { zIndex: 1 }).addTo(this);
+        this.setView([0, 0]);
           }
         ")
     })
