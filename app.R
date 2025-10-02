@@ -1251,7 +1251,26 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     }
     
     mr <- FALSE #Reinitialize variable
-    output$map <- renderLeaflet(map_shown)
+    # output$map <- renderLeaflet(map_shown)
+    output$map <- renderLeaflet({
+      leaflet(options = leafletOptions(minZoom = 17, maxZoom = 20)) %>%
+        addTiles() %>%
+        htmlwidgets::onRender("
+          function(el, x) {
+            var imageUrl = 'assets/vir_envs_layers/VirEnv_41.png';
+            var bounds = [
+              [0.0003628597122, 0.0002307207207],  // Southwest corner
+              [0.004459082914, 0.003717027207]     // Northeast corner
+            ];
+            var overlay = L.imageOverlay(imageUrl, bounds).addTo(this);
+            this.setView([0.0014684684685, 0.00200892857143], 17);  // (lat, lng), zoom
+            // Check for errors
+            overlay._image.onerror = function() {
+              alert('Failed to load image: ' + imageUrl);
+            };
+          }
+        ")
+    })
     
     
     #Convert abbreviation for type task
