@@ -374,6 +374,10 @@ server <- function(input, output, session) {
   # Store access token reactively
   accessToken_rv <- reactiveVal()
   track_data_rv <- reactiveVal()
+  
+  choices_rv <- reactiveVal() #FOR ENSURING THAT RIGHT NAME IS REFLECTED IN SELECTIZEINPUT INSTEAD OF MONGO DB IDs
+  
+  
   apiURL_rv <- reactiveVal("https://api.geogami.ifgi.de")
 
   # Observe the URL query string for the token parameter
@@ -446,6 +450,10 @@ server <- function(input, output, session) {
         paste0(tracks_data$players, " - ", tracks_data$createdAt)
       )
       
+      # saving this mapping for reuse in a reactive variable
+      choices_rv(choices)
+      
+      
       updateSelectizeInput(session, "selected_files",
                           choices = choices,
                           server = TRUE)
@@ -490,11 +498,14 @@ server <- function(input, output, session) {
 
   # 6. Select single file to view
   output$file_selector_ui <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
 
     selectizeInput("selected_data_file",
                    "Selected Players:",
-                choices = input$selected_files,
+                   choices = choices_rv(),
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
@@ -570,13 +581,16 @@ server <- function(input, output, session) {
   ### 9. UI: multiple file selector for comparison (tables, graphics, maps, photos)
   # UI for Compare Players - with select/deselect buttons
   output$file_selector_ui1 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
 
     tagList(
       selectizeInput(
         "selected_multiple_files", 
         "Selected Players:", 
-                choices = input$selected_files,
+        choices = choices_rv(),
                 selected = input$selected_files,
         multiple = TRUE,
         options = list(
@@ -615,13 +629,16 @@ server <- function(input, output, session) {
   
   ##### Filters for comparing Graphics starts
   output$file_selector_ui2 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
     
     tagList(
       selectizeInput(
         "selected_multiple_files2",  
         "Selected Players:", 
-                choices = input$selected_files,
+        choices = choices_rv(),
                 selected = input$selected_files,
         multiple = TRUE,
         options = list(plugins = list('remove_button'))
@@ -659,22 +676,28 @@ server <- function(input, output, session) {
   
   ##### Filter for maps
   output$file_selector_ui3 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
     
     selectizeInput("selected_data_file",
                    "Selected Players: ",
-                choices = input$selected_files,
+                   choices = choices_rv(),
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
   
   ##### Filter for photos
   output$file_selector_ui4 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
     
     selectizeInput("selected_data_file",
                    "Selected Players: ",
-                choices = input$selected_files,
+                   choices = choices_rv(),
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
