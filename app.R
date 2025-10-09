@@ -525,24 +525,48 @@ server <- function(input, output, session) {
     })
   })
 
+  # ### 8. Reactive: load multiple json files for comparison
+  # load_multiple <- reactive({
+  #   req(input$selected_multiple_files)
+  # 
+  #   # If multiple IDs are found, use only the last one
+  #   sel <- input$selected_multiple_files[length(input$selected_multiple_files)]
+  # 
+  #   lapply(sel, function(file) {
+  #     track_id <- sel
+  #     # Construct the API URL
+  #     url <- paste0(apiURL_rv(), "/track/", track_id)
+  #     # Fetch and return the JSON data from the server
+  #     track_data <- fetch_games_data_from_server(url, accessToken_rv())
+  #     track_data_rv(track_data)  # Store the data in reactive value
+  #     return(track_data)
+  #   })
+  # })
+
+  
   ### 8. Reactive: load multiple json files for comparison
   load_multiple <- reactive({
     req(input$selected_multiple_files)
-
-    # If multiple IDs are found, use only the last one
-    sel <- input$selected_multiple_files[length(input$selected_multiple_files)]
-
-    lapply(sel, function(file) {
-      track_id <- sel
-      # Construct the API URL
+    
+    # Taking all selected IDs
+    sel <- input$selected_multiple_files
+    
+    # Fetching the data for each selected track
+    data_list <- lapply(sel, function(track_id) {
       url <- paste0(apiURL_rv(), "/track/", track_id)
-      # Fetch and return the JSON data from the server
       track_data <- fetch_games_data_from_server(url, accessToken_rv())
-      track_data_rv(track_data)  # Store the data in reactive value
       return(track_data)
     })
+    
+    # updating track_data_rv to hold a list of all
+    track_data_rv(data_list)
+    
+    return(data_list)
   })
-
+  
+  
+  
+  
   ### 9. UI: multiple file selector for comparison (tables, graphics, maps, photos)
   # UI for Compare Players - with select/deselect buttons
   output$file_selector_ui1 <- renderUI({
