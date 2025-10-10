@@ -223,7 +223,7 @@ ui <- page_sidebar(
 
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
-      "Version 1.1.2 - 10:09 01.10.2025"
+      "Version 1.2.1 - 11:40 10.10.2025"
     )
   ),
   
@@ -374,6 +374,10 @@ server <- function(input, output, session) {
   # Store access token reactively
   accessToken_rv <- reactiveVal()
   track_data_rv <- reactiveVal()
+  
+  choices_rv <- reactiveVal() #FOR ENSURING THAT RIGHT NAME IS REFLECTED IN SELECTIZEINPUT INSTEAD OF MONGO DB IDs
+  
+  
   apiURL_rv <- reactiveVal("https://api.geogami.ifgi.de")
 
   # Observe the URL query string for the token parameter
@@ -446,6 +450,10 @@ server <- function(input, output, session) {
         paste0(tracks_data$players, " - ", tracks_data$createdAt)
       )
       
+      # saving this mapping for reuse in a reactive variable
+      choices_rv(choices)
+      
+      
       updateSelectizeInput(session, "selected_files",
                           choices = choices,
                           server = TRUE)
@@ -490,11 +498,14 @@ server <- function(input, output, session) {
 
   # 6. Select single file to view
   output$file_selector_ui <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
 
     selectizeInput("selected_data_file",
                    "Selected Players:",
-                choices = input$selected_files,
+                   choices = choices_rv(),
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
@@ -525,34 +536,61 @@ server <- function(input, output, session) {
     })
   })
 
+  # ### 8. Reactive: load multiple json files for comparison
+  # load_multiple <- reactive({
+  #   req(input$selected_multiple_files)
+  # 
+  #   # If multiple IDs are found, use only the last one
+  #   sel <- input$selected_multiple_files[length(input$selected_multiple_files)]
+  # 
+  #   lapply(sel, function(file) {
+  #     track_id <- sel
+  #     # Construct the API URL
+  #     url <- paste0(apiURL_rv(), "/track/", track_id)
+  #     # Fetch and return the JSON data from the server
+  #     track_data <- fetch_games_data_from_server(url, accessToken_rv())
+  #     track_data_rv(track_data)  # Store the data in reactive value
+  #     return(track_data)
+  #   })
+  # })
+
+  
   ### 8. Reactive: load multiple json files for comparison
   load_multiple <- reactive({
     req(input$selected_multiple_files)
-
-    # If multiple IDs are found, use only the last one
-    sel <- input$selected_multiple_files[length(input$selected_multiple_files)]
-
-    lapply(sel, function(file) {
-      track_id <- sel
-      # Construct the API URL
+    
+    # Taking all selected IDs
+    sel <- input$selected_multiple_files
+    
+    # Fetching the data for each selected track
+    data_list <- lapply(sel, function(track_id) {
       url <- paste0(apiURL_rv(), "/track/", track_id)
-      # Fetch and return the JSON data from the server
       track_data <- fetch_games_data_from_server(url, accessToken_rv())
-      track_data_rv(track_data)  # Store the data in reactive value
       return(track_data)
     })
+    
+    # updating track_data_rv to hold a list of all
+    track_data_rv(data_list)
+    
+    return(data_list)
   })
-
+  
+  
+  
+  
   ### 9. UI: multiple file selector for comparison (tables, graphics, maps, photos)
   # UI for Compare Players - with select/deselect buttons
   output$file_selector_ui1 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
 
     tagList(
       selectizeInput(
         "selected_multiple_files", 
         "Selected Players:", 
-                choices = input$selected_files,
+        choices = choices_rv(),
                 selected = input$selected_files,
         multiple = TRUE,
         options = list(
@@ -591,13 +629,16 @@ server <- function(input, output, session) {
   
   ##### Filters for comparing Graphics starts
   output$file_selector_ui2 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
     
     tagList(
       selectizeInput(
         "selected_multiple_files2",  
         "Selected Players:", 
-                choices = input$selected_files,
+        choices = choices_rv(),
                 selected = input$selected_files,
         multiple = TRUE,
         options = list(plugins = list('remove_button'))
@@ -635,22 +676,28 @@ server <- function(input, output, session) {
   
   ##### Filter for maps
   output$file_selector_ui3 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
     
     selectizeInput("selected_data_file",
                    "Selected Players: ",
-                choices = input$selected_files,
+                   choices = choices_rv(),
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
   
   ##### Filter for photos
   output$file_selector_ui4 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
     
     selectizeInput("selected_data_file",
                    "Selected Players: ",
-                choices = input$selected_files,
+                   choices = choices_rv(),
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
