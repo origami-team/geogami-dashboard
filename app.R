@@ -177,7 +177,7 @@ ui <- page_sidebar(
     conditionalPanel(
       condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
       div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-        selectizeInput(
+        selectInput(
         inputId = "selected_games",
         label = "Select your game:",
         choices = NULL  # Leave it empty initially
@@ -401,9 +401,7 @@ server <- function(input, output, session) {
     }
 
     ### 2. Populate select input for games
-    updateSelectizeInput(session, "selected_games",
-                          choices = setNames(games_id, games_name),
-                          server = TRUE)
+    updateSelectInput(session, "selected_games",
   
     output$info_download <- renderText({
         ""
