@@ -576,33 +576,36 @@ server <- function(input, output, session) {
         choices = choices_rv(),
                 selected = input$selected_files,
         multiple = TRUE
-      ),
-      # Add select/deselect buttons
-      actionButton("select_all_players", "Select All"),
-      actionButton("deselect_all_players", "Reset")
+      )
+      # ,
+      # # Add select/deselect buttons
+      # actionButton("select_all_players", "Select All"),
+      # actionButton("deselect_all_players", "Select None")
     )
   })
   
   
   ####-------------'select and deselect all' buttons logic for file_selector_ui 1 that is 'compare' tab------------
   # Select all players
-  observeEvent(input$select_all_players, {
-    req(input$selected_files)
-    updateSelectInput(
-      session,
-      "selected_multiple_files",
-      selected = input$selected_files
-    )
-  })
-  
-  # Deselect all players
-  observeEvent(input$deselect_all_players, {
-    updateSelectInput(
-      session,
-      "selected_multiple_files",
-      selected = character(0)
-    )
-  })
+  # observeEvent(input$select_all_players, {
+  #   req(choices_rv())
+  #   req(input$selected_files)
+  #   updateSelectInput(
+  #     session,
+  #     "selected_multiple_files",
+  #     selected = input$selected_files
+  #   )
+  # })
+  # 
+  # # Deselect all players
+  # observeEvent(input$deselect_all_players, {
+  #   req(choices_rv())
+  #   updateSelectInput(
+  #     session,
+  #     "selected_multiple_files",
+  #     selected = character(0)
+  #   )
+  # })
   ####-------------'select and deselect all' buttons logic for file_selector_ui 1 that is 'compare' tab ENDS------------
   
   
@@ -616,37 +619,40 @@ server <- function(input, output, session) {
     
     tagList(
       selectInput(
-        "selected_multiple_files2",  
+        "selected_multiple_files",  
         "Selected Players:", 
         choices = choices_rv(),
                 selected = input$selected_files,
         multiple = TRUE
-      ),
-      actionButton("select_all_players2", "Select All"),
-      actionButton("deselect_all_players2", "Reset")
+      )
+      # ,
+      # actionButton("select_all_players2", "Select All"),
+      # actionButton("deselect_all_players2", "Select None")
     )
   })
   
   
   ####-------------'select and deselect all' buttons logic for file_selector_ui2 that is 'stats' tab------------
   # Select all players (file_selector_ui2)
-  observeEvent(input$select_all_players2, {
-    req(input$selected_files)
-    updateSelectInput(
-      session,
-      "selected_multiple_files2",
-      selected = input$selected_files
-    )
-  })
-  
-  # Deselect all players (file_selector_ui2)
-  observeEvent(input$deselect_all_players2, {
-    updateSelectInput(
-      session,
-      "selected_multiple_files2",
-      selected = character(0)
-    )
-  })
+  # observeEvent(input$select_all_players2, {
+  #   req(choices_rv())
+  #   req(input$selected_files)
+  #   updateSelectInput(
+  #     session,
+  #     "selected_multiple_files2",
+  #     selected = input$selected_files
+  #   )
+  # })
+  # 
+  # # Deselect all players (file_selector_ui2)
+  # observeEvent(input$deselect_all_players2, {
+  #   req(choices_rv())
+  #   updateSelectInput(
+  #     session,
+  #     "selected_multiple_files2",
+  #     selected = character(0)
+  #   )
+  # })
   ####-------------'select and deselect all' buttons logic for file_selector_ui2 that is 'stats' tab ENDS------------
   
   
