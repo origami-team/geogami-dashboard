@@ -1137,7 +1137,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
         ),
         # Add two action buttons below the dropdown
         actionButton("select_all_tasks", "Select All"),
-        actionButton("deselect_all_tasks", "Reset")
+        actionButton("deselect_all_tasks", "Select None")
       )
     })
     
