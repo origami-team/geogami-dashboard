@@ -402,6 +402,7 @@ server <- function(input, output, session) {
 
     ### 2. Populate select input for games
     updateSelectInput(session, "selected_games",
+                          choices = setNames(games_id, games_name))
   
     output$info_download <- renderText({
         ""
