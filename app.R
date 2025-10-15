@@ -189,25 +189,11 @@ ui <- page_sidebar(
     conditionalPanel(
       condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
       div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-          selectizeInput(
+          selectInput(
             inputId = "selected_files",
             label = "Select the players:",
             choices = NULL,  # Leave it empty initially
-            multiple = TRUE,
-            options = list(
-              placeholder = "Start typing to search...",
-              plugins = list('remove_button'),
-              onChange = I('
-              function(value) {
-                if (value.includes("ALL")) {
-                  // Select all files except "ALL"
-                  var allFiles = Object.keys(this.options).filter(k => k !== "ALL");
-                  this.setValue(allFiles);            
-                  this.removeOption("ALL");           
-                }
-              }
-            ')
-            )
+            multiple = TRUE
           ),
           actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
           textOutput("info_download"),
@@ -223,7 +209,7 @@ ui <- page_sidebar(
 
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
-      "Version 1.2.1 - 11:40 10.10.2025"
+      "Version 1.1.2 - 10:09 01.10.2025"
     )
   ),
   
@@ -454,9 +440,8 @@ server <- function(input, output, session) {
       choices_rv(choices)
       
       
-      updateSelectizeInput(session, "selected_files",
-                          choices = choices,
-                          server = TRUE)
+      updateSelectInput(session, "selected_files",
+                          choices = choices)
 
       output$info_download <- renderText({
         ""
@@ -489,10 +474,9 @@ server <- function(input, output, session) {
         paste0(tracks_data$players, " - ", tracks_data$createdAt)
       )
       
-      updateSelectizeInput(session, "selected_files",
+      updateSelectInput(session, "selected_files",
                           choices = choices,
-                          selected = NULL,
-                          server = TRUE)
+                          selected = NULL)
     }
   })
 
@@ -503,7 +487,7 @@ server <- function(input, output, session) {
     
     req(input$selected_files)
 
-    selectizeInput("selected_data_file",
+    selectInput("selected_data_file",
                    "Selected Players:",
                    choices = choices_rv(),
                    selected = input$selected_files[1],
@@ -587,15 +571,12 @@ server <- function(input, output, session) {
     req(input$selected_files)
 
     tagList(
-      selectizeInput(
+      selectInput(
         "selected_multiple_files", 
         "Selected Players:", 
         choices = choices_rv(),
                 selected = input$selected_files,
-        multiple = TRUE,
-        options = list(
-          plugins = list('remove_button')
-        )
+        multiple = TRUE
       ),
       # Add select/deselect buttons
       actionButton("select_all_players", "Select All"),
@@ -608,7 +589,7 @@ server <- function(input, output, session) {
   # Select all players
   observeEvent(input$select_all_players, {
     req(input$selected_files)
-    updateSelectizeInput(
+    updateSelectInput(
       session,
       "selected_multiple_files",
       selected = input$selected_files
@@ -617,7 +598,7 @@ server <- function(input, output, session) {
   
   # Deselect all players
   observeEvent(input$deselect_all_players, {
-    updateSelectizeInput(
+    updateSelectInput(
       session,
       "selected_multiple_files",
       selected = character(0)
@@ -635,13 +616,12 @@ server <- function(input, output, session) {
     req(input$selected_files)
     
     tagList(
-      selectizeInput(
+      selectInput(
         "selected_multiple_files2",  
         "Selected Players:", 
         choices = choices_rv(),
                 selected = input$selected_files,
-        multiple = TRUE,
-        options = list(plugins = list('remove_button'))
+        multiple = TRUE
       ),
       actionButton("select_all_players2", "Select All"),
       actionButton("deselect_all_players2", "Reset")
@@ -653,7 +633,7 @@ server <- function(input, output, session) {
   # Select all players (file_selector_ui2)
   observeEvent(input$select_all_players2, {
     req(input$selected_files)
-    updateSelectizeInput(
+    updateSelectInput(
       session,
       "selected_multiple_files2",
       selected = input$selected_files
@@ -662,7 +642,7 @@ server <- function(input, output, session) {
   
   # Deselect all players (file_selector_ui2)
   observeEvent(input$deselect_all_players2, {
-    updateSelectizeInput(
+    updateSelectInput(
       session,
       "selected_multiple_files2",
       selected = character(0)
@@ -681,7 +661,7 @@ server <- function(input, output, session) {
     
     req(input$selected_files)
     
-    selectizeInput("selected_data_file",
+    selectInput("selected_data_file",
                    "Selected Players: ",
                    choices = choices_rv(),
                    selected = input$selected_files[1],
@@ -695,7 +675,7 @@ server <- function(input, output, session) {
     
     req(input$selected_files)
     
-    selectizeInput("selected_data_file",
+    selectInput("selected_data_file",
                    "Selected Players: ",
                    choices = choices_rv(),
                    selected = input$selected_files[1],
@@ -1149,13 +1129,12 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
       
       tagList(
-        selectizeInput(
+        selectInput(
           "selected_task_ids",
           "Filter by Task ID:",
           choices = task_ids,
           selected = task_ids,   # initially all
-          multiple = TRUE,
-          options = list(plugins = list('remove_button'))
+          multiple = TRUE
         ),
         # Add two action buttons below the dropdown
         actionButton("select_all_tasks", "Select All"),
@@ -1184,11 +1163,11 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     observeEvent(input$select_all_tasks, {
       req(df_react())
       task_ids <- seq_len(nrow(df_react()))
-      updateSelectizeInput(session, "selected_task_ids", selected = task_ids)
+      updateSelectInput(session, "selected_task_ids", selected = task_ids)
     })
     
     observeEvent(input$deselect_all_tasks, {
-      updateSelectizeInput(session, "selected_task_ids", selected = character(0))
+      updateSelectInput(session, "selected_task_ids", selected = character(0))
     })
     
     #---------logic for select/deselect all ends ----------------------
@@ -1873,10 +1852,9 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     choices <- c("All Files" = "ALL", files)
     
-    updateSelectizeInput(session, "selected_files",
+    updateSelectInput(session, "selected_files",
                          choices = choices,
-                         selected = NULL,
-                         server = TRUE)
+                         selected = NULL)
     
     output$info_download <- renderText({
       ""
@@ -2342,13 +2320,12 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
       
       tagList(
-        selectizeInput(
+        selectInput(
           "selected_task_ids",
           "Filter by Task ID:",
           choices = task_ids,
           selected = task_ids,   # initially all
-          multiple = TRUE,
-          options = list(plugins = list('remove_button'))
+          multiple = TRUE
         ),
         # Add two action buttons below the dropdown
         actionButton("select_all_tasks", "Select All"),
@@ -2377,11 +2354,11 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     observeEvent(input$select_all_tasks, {
       req(df_react())
       task_ids <- seq_len(nrow(df_react()))
-      updateSelectizeInput(session, "selected_task_ids", selected = task_ids)
+      updateSelectInput(session, "selected_task_ids", selected = task_ids)
     })
     
     observeEvent(input$deselect_all_tasks, {
-      updateSelectizeInput(session, "selected_task_ids", selected = character(0))
+      updateSelectInput(session, "selected_task_ids", selected = character(0))
     })
     
     #---------logic for select/deselect all ends ----------------------
