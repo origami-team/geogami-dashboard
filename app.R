@@ -1412,12 +1412,52 @@ observeEvent(req(input$selected_data_file, input$num_value), {
                 console.log('Current zoom level:', map.getZoom());
               });
         var imageUrl = 'assets/vir_envs_layers/VirEnv_40_f1.png';
-            var bounds = [
+
+        // ########################
+        // overlayCoords: 4 corners of where the image should appear
+        var overlayCoords = [
+          [0, 0.000357142857142857],
+          [0.00036036036036036, 0.000357142857142857],
+          [0.00036036036036036, 0],
+          [0, 0]
+        ];
+
+        // Compute SW/NE bounds from overlayCoords
+        var lats = overlayCoords.map(c => c[0]);
+        var lngs = overlayCoords.map(c => c[1]);
+        var sw = [Math.min(...lats), Math.min(...lngs)];
+        var ne = [Math.max(...lats), Math.max(...lngs)];
+
+        // ########################
+        // bounds: constrain map panning/zooming to these bounds
+        var mapBounds = [
           [- 0.0002, - 0.0002],  // Southwest [lat, lng]
           [0.00055, 0.00055]     // Northeast [lat, lng]
             ];
-        var overlay = L.imageOverlay(imageUrl, bounds, { zIndex: 1 }).addTo(this);
-        this.setView([0, 0]);
+
+        // Add image overlay
+        var overlay = L.imageOverlay(imageUrl, [sw, ne], { zIndex: 10 }).addTo(this);
+
+        // Constrain map to bounds
+        this.setMaxBounds(mapBounds);
+
+        // Fit map view to overlay
+        this.fitBounds([sw, ne]);
+
+        // var overlay = L.imageOverlay(imageUrl, bounds, { zIndex: 1 }).addTo(this);
+        // this.setView([0, 0]);
+        
+
+        // Polygon coordinates
+        /* var overlayCoords = [
+          [0, 0.000357142857142857],
+          [0.00036036036036036, 0.000357142857142857],
+          [0.00036036036036036, 0],
+          [0, 0]
+        ];
+
+        // Draw polygon on top of overlay
+        L.polygon(overlayCoords, {color: 'blue', weight: 2, fillOpacity: 0}).addTo(this); */
           }
         ")
     })
