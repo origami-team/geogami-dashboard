@@ -1277,7 +1277,21 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     # })
 
 
-
+    ## Extract virtual environment names which have INIT_TASK events, to exclude other events
+    ## here having init-task twice for one task will cause an issue, this migth happen if user uses previous button
+    # Get events where type = INIT_TASK 
+    init_task_indices <- which(data[[1]]$events$type == "INIT_TASK") 
+    # Extract virEnvName for those events 
+    virEnvNames <- sapply(
+      init_task_indices, function(i) { 
+        if (!is.null(data[[1]]$events$task$virEnvType[i])) { 
+          data[[1]]$events$task$virEnvType[i] 
+        } 
+        else 
+          { NA } 
+      }
+    )
+    # 2. To render virtual environment map
     output$map <- renderLeaflet({
   # Default empty map
   map_shown <- leaflet() %>%
