@@ -1474,27 +1474,10 @@ observeEvent(req(input$selected_data_file, input$num_value), {
 
         // Fit map view to overlay
         this.fitBounds([sw, ne]);
-
-        // var overlay = L.imageOverlay(imageUrl, bounds, { zIndex: 1 }).addTo(this);
-        // this.setView([0, 0]);
-        
-
-        // Polygon coordinates
-        /* var overlayCoords = [
-          [0, 0.000357142857142857],
-          [0.00036036036036036, 0.000357142857142857],
-          [0.00036036036036036, 0],
-          [0, 0]
-        ];
-
-        // Draw polygon on top of overlay
-        L.polygon(overlayCoords, {color: 'blue', weight: 2, fillOpacity: 0}).addTo(this); */
-          }
       ", data = list(task_number = input$num_value,
                      virEnvName = virEnvNames[input$num_value])
       )
     })
-    
     
     # Convert abbreviation for type task
     if (!is.na(t)) {
