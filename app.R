@@ -1251,6 +1251,8 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     }
     
     mr <- FALSE #Reinitialize variable
+    ### Rendering map
+    # 1. To render realworld map
     # output$map <- renderLeaflet(map_shown)
     # output$map <- renderLeaflet({
     #   map_shown
@@ -1404,14 +1406,25 @@ observeEvent(req(input$selected_data_file, input$num_value), {
   # Add overlay with zIndex control
   map_shown %>%
         htmlwidgets::onRender("
-          function(el, x) {
+        function(el, x, data) {
         var map = this;
-        map.options.minZoom = 18;
-        map.options.maxZoom = 20;
+          var task_number = data.task_number;
+          console.log('task_number from R:', task_number);
+          var virEnvName = data.virEnvName;
+          console.log('virEnvName from R:', virEnvName);
+          map.options.minZoom = 20;
+          // map.options.maxZoom = 20;
         map.on('zoomend', function() {
                 console.log('Current zoom level:', map.getZoom());
               });
-        var imageUrl = 'assets/vir_envs_layers/VirEnv_40_f1.png';
+          
+          // Define imageUrl variable
+          var imageUrl;
+          if (virEnvName !== null && virEnvName !== undefined && virEnvName !== 'NA') {
+            imageUrl = 'assets/vir_envs_layers/' + virEnvName + '.png';
+          } else {
+            imageUrl = 'assets/vir_envs_layers/VirEnv_40_f1.png';
+          }
 
         // ########################
         // overlayCoords: 4 corners of where the image should appear
@@ -1459,11 +1472,13 @@ observeEvent(req(input$selected_data_file, input$num_value), {
         // Draw polygon on top of overlay
         L.polygon(overlayCoords, {color: 'blue', weight: 2, fillOpacity: 0}).addTo(this); */
           }
-        ")
+      ", data = list(task_number = input$num_value,
+                     virEnvName = virEnvNames[input$num_value])
+      )
     })
     
     
-    #Convert abbreviation for type task
+    # Convert abbreviation for type task
     if (!is.na(t)) {
       if (t == "nav-flag") {
         t <- "Navigation to flag"
