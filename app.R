@@ -1285,6 +1285,10 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     virEnvNames <- sapply(
       init_task_indices, function(i) { 
         if (!is.null(data[[1]]$events$task$virEnvType[i])) { 
+          if (!is.null(data[[1]]$events$task$floor[i]) && !is.na(data[[1]]$events$task$floor[i])) {
+            paste0(data[[1]]$events$task$virEnvType[i] , "_", data[[1]]$events$task$floor[i])
+          } 
+          else
           data[[1]]$events$task$virEnvType[i] 
         } 
         else 
