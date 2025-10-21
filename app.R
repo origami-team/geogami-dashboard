@@ -1281,7 +1281,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     ## here having init-task twice for one task will cause an issue, this migth happen if user uses previous button
     # Get events where type = INIT_TASK 
     init_task_indices <- which(data[[1]]$events$type == "INIT_TASK") 
-    # Extract virEnvName for those events 
+    # Extract virEnvName and floor if 3d building for those events 
     virEnvNames <- sapply(
       init_task_indices, function(i) { 
         if (!is.null(data[[1]]$events$task$virEnvType[i])) { 
