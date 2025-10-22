@@ -11,6 +11,7 @@ library(jsonlite)
 library(bslib)
 library(htmlwidgets)
 library(httr)
+library(zip)
 iris$Species <- NULL
 # Define the directory where JSON files are stored
 json_dir <- getwd()  # or set to your specific directory, e.g., "data/json"
@@ -197,7 +198,7 @@ ui <- page_sidebar(
           ),
           actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
           textOutput("info_download"),
-          actionButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;")
+          downloadButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;")
         )
       ),
     
@@ -448,21 +449,69 @@ server <- function(input, output, session) {
     }
   })
 
-  # Download json file
+  # # Download json file
+  # output$download_json <- downloadHandler(
+  #   filename = function() {
+  #     selected_track_data = track_data_rv()
+  #     paste0(selected_track_data$players, " - ", selected_track_data$createdAt,".json")
+  #   },
+  #   content = function(file) {
+  #     req(input$selected_files)  # Ensure some files are selected
+  #     list_to_save <- track_data_rv()  # Your reactive list
+  # 
+  #     # Save to JSON
+  #     jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
+  #   }
+  # )
+
+  # Downloading one or more JSON files
   output$download_json <- downloadHandler(
     filename = function() {
-      selected_track_data = track_data_rv()
-      paste0(selected_track_data$players, " - ", selected_track_data$createdAt,".json")
+      if (length(input$selected_files) > 1) {
+        paste0("geogami_tracks_", Sys.Date(), ".zip")
+      } else {
+        selected_track_data <- track_data_rv()
+        paste0(selected_track_data$players, " - ", selected_track_data$createdAt, ".json")
+      }
     },
     content = function(file) {
-      req(input$selected_files)  # Ensure some files are selected
-      list_to_save <- track_data_rv()  # Your reactive list
+      req(input$selected_files)
 
-      # Save to JSON
-      jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
+      # --- MULTIPLE FILES SELECTED ---
+      if (length(input$selected_files) > 1) {
+        # Creating a temporary directory to hold all the files
+        tmpdir <- tempdir()
+        json_files <- c()
+
+        for (selected_id in input$selected_files) {
+          url <- paste0(apiURL_rv(), "/track/", selected_id)
+          track_data <- fetch_games_data_from_server(url, accessToken_rv())
+
+          # Handling empty results
+          if (is.null(track_data)) next
+
+          # File name for each JSON
+          fname <- file.path(tmpdir, paste0(selected_id, ".json"))
+          jsonlite::write_json(track_data, path = fname, pretty = TRUE, auto_unbox = TRUE)
+          json_files <- c(json_files, fname)
+        }
+
+        # Zip all JSON files together
+        zip::zipr(zipfile = file, files = json_files, recurse = FALSE)
+
+      } else {
+        # --- SINGLE FILE SELECTED ---
+        selected_id <- input$selected_files[1]
+        url <- paste0(apiURL_rv(), "/track/", selected_id)
+        track_data <- fetch_games_data_from_server(url, accessToken_rv())
+
+        jsonlite::write_json(track_data, path = file, pretty = TRUE, auto_unbox = TRUE)
+      }
     }
   )
-
+  
+  
+  
   ### 5. Reset file selector when reset button clicked
   observeEvent(input$reset, {
     tracks_data <- selected_game_tracks_rv()
