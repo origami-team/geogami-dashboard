@@ -47,9 +47,9 @@ fetch_games_data_from_server <- function(url, token) {
 ui <- page_sidebar(
   title = div(
     style = "display: flex; align-items: center; gap: 20px;",
-    tags$img(src = "https://geogami.ifgi.de/pictures/logo/icon.png", height = "60px"),
+    tags$img(src = "https://geogami.ifgi.de/wp-content/uploads/2020/03/Unbenannt-7.png", height = "60px"),
     tags$div(
-      tags$h1("Welcome to the GeoGami dashboard!", style = "margin: 0; font-size: 24px;"),
+      tags$h1("Welcome to the dashboard!", style = "margin: 0; font-size: 24px;"),
       tags$a("app.geogami.ifgi.de", href = "https://app.geogami.ifgi.de/", style = "font-size: 14px; color: white;")
     )
   ),
