@@ -1282,19 +1282,28 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     # Get events where type = INIT_TASK 
     init_task_indices <- which(data[[1]]$events$type == "INIT_TASK") 
     # Extract virEnvName and floor if 3d building for those events 
-    virEnvNames <- sapply(
+    virEnvLayers <- character(0)      # for virtual environment layers / images names
+    virEnvNames <- character(0)       # for virtual environemnt names
+    sapply(
       init_task_indices, function(i) { 
         if (!is.null(data[[1]]$events$task$virEnvType[i])) { 
+          val =  data[[1]]$events$task$virEnvType[i]
+          virEnvNames <<- c(virEnvNames, val)
+
           if (!is.null(data[[1]]$events$task$floor[i]) && !is.na(data[[1]]$events$task$floor[i])) {
-            paste0(data[[1]]$events$task$virEnvType[i] , "_", data[[1]]$events$task$floor[i])
+            virEnvLayers <<- c(virEnvLayers, paste0(val , "_", data[[1]]$events$task$floor[i])) 
           } 
           else
-          data[[1]]$events$task$virEnvType[i] 
+            virEnvLayers <<- c(virEnvLayers, val) 
         } 
         else 
           { NA } 
       }
     )
+
+    # Load virtual environment properties from JSON
+    virEnvsProperties <- fromJSON("www/virEnvsProperties.json"
+
     # 2. To render virtual environment map
     output$map <- renderLeaflet({
   # Default empty map
