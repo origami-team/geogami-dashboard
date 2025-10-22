@@ -969,7 +969,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
           t <- type_task[i]
           if (type_task[i] == "theme-object" && (cou == input$num_value)) {
             lng_ans_obj <- append(lng_ans_obj, targ[[i]][1])
-            lat_ans_obj <- append(lng_ans_obj, targ[[i]][2])
+            lat_ans_obj <- append(lat_ans_obj, targ[[i]][2])
           }
         }
         if ((type_task[i] == "free") && (cou == input$num_value) && length(drawing_point_lat) != 0 && !is.na(drawing_point_lat[[i]]) && ans_type[[i]] == "DRAW") {
@@ -2162,7 +2162,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
           t <- type_task[i]
           if (type_task[i] == "theme-object" && (cou == input$num_value)) {
             lng_ans_obj <- append(lng_ans_obj, targ[[i]][1])
-            lat_ans_obj <- append(lng_ans_obj, targ[[i]][2])
+            lat_ans_obj <- append(lat_ans_obj, targ[[i]][2])
           }
         }
         if ((type_task[i] == "free") && (cou == input$num_value) && length(drawing_point_lat) != 0 && !is.na(drawing_point_lat[[i]]) && ans_type[[i]] == "DRAW") {
