@@ -11,6 +11,7 @@ library(jsonlite)
 library(bslib)
 library(htmlwidgets)
 library(httr)
+library(zip)
 iris$Species <- NULL
 # Define the directory where JSON files are stored
 json_dir <- getwd()  # or set to your specific directory, e.g., "data/json"
@@ -46,9 +47,9 @@ fetch_games_data_from_server <- function(url, token) {
 ui <- page_sidebar(
   title = div(
     style = "display: flex; align-items: center; gap: 20px;",
-    tags$img(src = "https://geogami.ifgi.de/pictures/logo/icon.png", height = "60px"),
+    tags$img(src = "https://geogami.ifgi.de/wp-content/uploads/2020/03/Unbenannt-7.png", height = "60px"),
     tags$div(
-      tags$h1("Welcome to the GeoGami dashboard!", style = "margin: 0; font-size: 24px;"),
+      tags$h1("Welcome to the dashboard!", style = "margin: 0; font-size: 24px;"),
       tags$a("app.geogami.ifgi.de", href = "https://app.geogami.ifgi.de/", style = "font-size: 14px; color: white;")
     )
   ),
@@ -197,7 +198,7 @@ ui <- page_sidebar(
           ),
           actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
           textOutput("info_download"),
-          actionButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;")
+          downloadButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;")
         )
       ),
     
@@ -209,7 +210,7 @@ ui <- page_sidebar(
 
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
-      "Version 1.1.2 - 10:09 01.10.2025"
+      "Version 1.3.1 - 15:40 22.10.2025"
     )
   ),
   
@@ -448,21 +449,69 @@ server <- function(input, output, session) {
     }
   })
 
-  # Download json file
+  # # Download json file
+  # output$download_json <- downloadHandler(
+  #   filename = function() {
+  #     selected_track_data = track_data_rv()
+  #     paste0(selected_track_data$players, " - ", selected_track_data$createdAt,".json")
+  #   },
+  #   content = function(file) {
+  #     req(input$selected_files)  # Ensure some files are selected
+  #     list_to_save <- track_data_rv()  # Your reactive list
+  # 
+  #     # Save to JSON
+  #     jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
+  #   }
+  # )
+
+  # Downloading one or more JSON files
   output$download_json <- downloadHandler(
     filename = function() {
-      selected_track_data = track_data_rv()
-      paste0(selected_track_data$players, " - ", selected_track_data$createdAt,".json")
+      if (length(input$selected_files) > 1) {
+        paste0("geogami_tracks_", Sys.Date(), ".zip")
+      } else {
+        selected_track_data <- track_data_rv()
+        paste0(selected_track_data$players, " - ", selected_track_data$createdAt, ".json")
+      }
     },
     content = function(file) {
-      req(input$selected_files)  # Ensure some files are selected
-      list_to_save <- track_data_rv()  # Your reactive list
+      req(input$selected_files)
 
-      # Save to JSON
-      jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
+      # --- MULTIPLE FILES SELECTED ---
+      if (length(input$selected_files) > 1) {
+        # Creating a temporary directory to hold all the files
+        tmpdir <- tempdir()
+        json_files <- c()
+
+        for (selected_id in input$selected_files) {
+          url <- paste0(apiURL_rv(), "/track/", selected_id)
+          track_data <- fetch_games_data_from_server(url, accessToken_rv())
+
+          # Handling empty results
+          if (is.null(track_data)) next
+
+          # File name for each JSON
+          fname <- file.path(tmpdir, paste0(selected_id, ".json"))
+          jsonlite::write_json(track_data, path = fname, pretty = TRUE, auto_unbox = TRUE)
+          json_files <- c(json_files, fname)
+        }
+
+        # Zip all JSON files together
+        zip::zipr(zipfile = file, files = json_files, recurse = FALSE)
+
+      } else {
+        # --- SINGLE FILE SELECTED ---
+        selected_id <- input$selected_files[1]
+        url <- paste0(apiURL_rv(), "/track/", selected_id)
+        track_data <- fetch_games_data_from_server(url, accessToken_rv())
+
+        jsonlite::write_json(track_data, path = file, pretty = TRUE, auto_unbox = TRUE)
+      }
     }
   )
-
+  
+  
+  
   ### 5. Reset file selector when reset button clicked
   observeEvent(input$reset, {
     tracks_data <- selected_game_tracks_rv()
@@ -920,7 +969,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
           t <- type_task[i]
           if (type_task[i] == "theme-object" && (cou == input$num_value)) {
             lng_ans_obj <- append(lng_ans_obj, targ[[i]][1])
-            lat_ans_obj <- append(lng_ans_obj, targ[[i]][2])
+            lat_ans_obj <- append(lat_ans_obj, targ[[i]][2])
           }
         }
         if ((type_task[i] == "free") && (cou == input$num_value) && length(drawing_point_lat) != 0 && !is.na(drawing_point_lat[[i]]) && ans_type[[i]] == "DRAW") {
@@ -2113,7 +2162,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
           t <- type_task[i]
           if (type_task[i] == "theme-object" && (cou == input$num_value)) {
             lng_ans_obj <- append(lng_ans_obj, targ[[i]][1])
-            lat_ans_obj <- append(lng_ans_obj, targ[[i]][2])
+            lat_ans_obj <- append(lat_ans_obj, targ[[i]][2])
           }
         }
         if ((type_task[i] == "free") && (cou == input$num_value) && length(drawing_point_lat) != 0 && !is.na(drawing_point_lat[[i]]) && ans_type[[i]] == "DRAW") {
