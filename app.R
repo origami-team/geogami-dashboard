@@ -1467,10 +1467,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
 
         // ########################
         // bounds: constrain map panning/zooming to these bounds
-        var mapBounds = [
-          [- 0.0002, - 0.0002],  // Southwest [lat, lng]
-          [0.00055, 0.00055]     // Northeast [lat, lng]
-            ];
+          var mapBounds = data.virEnvsProperties[virEnvName].bounds;
 
         // Add image overlay
         var overlay = L.imageOverlay(imageUrl, [sw, ne], { zIndex: 10 }).addTo(this);
@@ -1480,8 +1477,11 @@ observeEvent(req(input$selected_data_file, input$num_value), {
 
         // Fit map view to overlay
         this.fitBounds([sw, ne]);
+      }
       ", data = list(task_number = input$num_value,
-                     virEnvName = virEnvNames[input$num_value])
+                      virEnvName = virEnvNames[input$num_value],
+                      virEnvLayer = virEnvLayers[input$num_value],
+                      virEnvsProperties = virEnvsProperties)
       )
     })
     
