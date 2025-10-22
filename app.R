@@ -1438,9 +1438,11 @@ observeEvent(req(input$selected_data_file, input$num_value), {
           var task_number = data.task_number;
           console.log('task_number from R:', task_number);
           var virEnvName = data.virEnvName;
-          console.log('virEnvName from R:', virEnvName);
-          map.options.minZoom = 20;
-          // map.options.maxZoom = 20;
+          var virEnvLayer = data.virEnvLayer;
+          console.log('virEnvLayer from R:', virEnvLayer);
+
+          map.options.minZoom = 17;
+          map.options.maxZoom = 20;
         map.on('zoomend', function() {
                 console.log('Current zoom level:', map.getZoom());
               });
@@ -1448,19 +1450,14 @@ observeEvent(req(input$selected_data_file, input$num_value), {
           // Define imageUrl variable
           var imageUrl;
           if (virEnvName !== null && virEnvName !== undefined && virEnvName !== 'NA') {
-            imageUrl = 'assets/vir_envs_layers/' + virEnvName + '.png';
+            imageUrl = 'assets/vir_envs_layers/' + virEnvLayer + '.png';
           } else {
-            imageUrl = 'assets/vir_envs_layers/VirEnv_40_f1.png';
+            imageUrl = 'assets/vir_envs_layers/VirEnv_1.png';
           }
 
         // ########################
         // overlayCoords: 4 corners of where the image should appear
-        var overlayCoords = [
-          [0, 0.000357142857142857],
-          [0.00036036036036036, 0.000357142857142857],
-          [0.00036036036036036, 0],
-          [0, 0]
-        ];
+          var overlayCoords = data.virEnvsProperties[virEnvName].overlayCoords;
 
         // Compute SW/NE bounds from overlayCoords
         var lats = overlayCoords.map(c => c[0]);
