@@ -358,6 +358,8 @@ server <- function(input, output, session) {
 
   # Store selected game track data reactively
   selected_game_tracks_rv <- reactiveVal()
+  
+  games_choices_rv <- reactiveVal()   # store mapping of game_id -> game_name (CREATING THIS FOR zip file that gets downloaded, this is used for giving the right name to the zip file that gets downloaded)
   # Store access token reactively
   accessToken_rv <- reactiveVal()
   track_data_rv <- reactiveVal()
@@ -402,8 +404,10 @@ server <- function(input, output, session) {
     }
 
     ### 2. Populate select input for games
+    mapping <- setNames(games_id, games_name)
+    games_choices_rv(mapping)  #MADE THIS CHANGE FOR CREATING ZIP FILE NAME (download button issue) AS PER THE GAME LOADED
     updateSelectInput(session, "selected_games",
-                          choices = setNames(games_id, games_name))
+                          choices = mapping)
   
     output$info_download <- renderText({
         ""
@@ -449,31 +453,43 @@ server <- function(input, output, session) {
     }
   })
 
-  # # Download json file
-  # output$download_json <- downloadHandler(
-  #   filename = function() {
-  #     selected_track_data = track_data_rv()
-  #     paste0(selected_track_data$players, " - ", selected_track_data$createdAt,".json")
-  #   },
-  #   content = function(file) {
-  #     req(input$selected_files)  # Ensure some files are selected
-  #     list_to_save <- track_data_rv()  # Your reactive list
-  # 
-  #     # Save to JSON
-  #     jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
-  #   }
-  # )
+  
 
-  # Downloading one or more JSON files
+  # --- DOWNLOAD JSON (single or multiple) ---
   output$download_json <- downloadHandler(
     filename = function() {
+      req(input$selected_files)
+
+      ############mapping of zip file i.e = name of the chosen game STARTS##############
+
+      # --- looking up readable game name from the stored mapping (game_id -> game_name) ---
+      games_map <- games_choices_rv()   # this was saved earlier
+      # games_map is a named vector where names(games_map) == games_name and games_map == games_id
+      game_name <- NA_character_
+      if (!is.null(games_map) && length(games_map) > 0) {
+        # finding here the name whose value equals the selected id
+        idx <- which(games_map == input$selected_games)
+        if (length(idx) > 0) {
+          game_name <- names(games_map)[idx[1]]
+        }
+      }
+      if (is.null(game_name) || length(game_name) == 0 || is.na(game_name)) {
+        game_name <- "geogami_game"
+      }
+      # clearing here the whitespaces if any (replace whitespace or other problematic chars with underscore)
+      game_name <- gsub("[^A-Za-z0-9_\\-]", "_", game_name)
+      ############mapping of zip file i.e = name of the chosen game ENDS##############
+
       if (length(input$selected_files) > 1) {
-        paste0("geogami_tracks_", Sys.Date(), ".zip")
+        paste0(game_name, "_tracks_", Sys.Date(), ".zip")
       } else {
         selected_track_data <- track_data_rv()
-        paste0(selected_track_data$players, " - ", selected_track_data$createdAt, ".json")
+        player_name <- gsub("\\s+", "_", selected_track_data$players)
+        date_label <- substr(selected_track_data$createdAt, 1, 10)
+        paste0(player_name, "_", date_label, ".json")
       }
     },
+
     content = function(file) {
       req(input$selected_files)
 
@@ -482,6 +498,7 @@ server <- function(input, output, session) {
         # Creating a temporary directory to hold all the files
         tmpdir <- tempdir()
         json_files <- c()
+        game_name <- gsub("\\s+", "_", input$selected_games)##########
 
         for (selected_id in input$selected_files) {
           url <- paste0(apiURL_rv(), "/track/", selected_id)
@@ -490,13 +507,24 @@ server <- function(input, output, session) {
           # Handling empty results
           if (is.null(track_data)) next
 
-          # File name for each JSON
-          fname <- file.path(tmpdir, paste0(selected_id, ".json"))
-          jsonlite::write_json(track_data, path = fname, pretty = TRUE, auto_unbox = TRUE)
+          # giving Clean filenames: PlayerName_Date.json
+          player_name <- gsub("\\s+", "_", track_data$players)
+          date_label <- substr(track_data$createdAt, 1, 10)
+          fname <- file.path(tmpdir, paste0(player_name, "_", date_label, ".json"))
+
+          # Preserving coordinate precision
+          jsonlite::write_json(
+            track_data,
+            path = fname,
+            pretty = TRUE,
+            auto_unbox = TRUE,
+            digits = NA   # keeping all coordinate decimals
+          )
+
           json_files <- c(json_files, fname)
         }
 
-        # Zip all JSON files together
+        # Bundling all JSONs into ZIP
         zip::zipr(zipfile = file, files = json_files, recurse = FALSE)
 
       } else {
@@ -505,7 +533,14 @@ server <- function(input, output, session) {
         url <- paste0(apiURL_rv(), "/track/", selected_id)
         track_data <- fetch_games_data_from_server(url, accessToken_rv())
 
-        jsonlite::write_json(track_data, path = file, pretty = TRUE, auto_unbox = TRUE)
+        # Preserving here all/ full coordinate precision for trajectory normalization
+        jsonlite::write_json(
+          track_data,
+          path = file,
+          pretty = TRUE,
+          auto_unbox = TRUE,
+          digits = NA   #  keeping all coordinate decimals
+        )
       }
     }
   )
