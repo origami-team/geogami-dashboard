@@ -2489,6 +2489,41 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       iconAnchorX = 10, iconAnchorY = 20,
     )
     
+    
+   
+    
+    ###########-------------START : downloaded json files issue solved here : safely handled the empty df and NA values--- THIS SOLVED THE MAP RENDERING ISSUE FOR THEME OBJECTS##################
+    # --- SAFE MAP RENDERING for upload button ---
+    # Cleaning all coordinate vectors before plotting with leaflet.
+    # Preventing the "invalid lat/lon" and "data.frame row names" errors.
+    # we can use this function before any addMarkers(), addCircles(), or addPolylines() calls.
+    # Cleaned all coordinate vectors before using them
+    
+    # --- SAFE MAP RENDERING ---
+    # Helper: safely unlist and remove invalid coords
+    safe_coords <- function(x) {
+      x <- unlist(x)
+      x <- x[is.finite(x) & !is.na(x)]
+      return(x)
+    }
+    
+    long <- safe_coords(long)
+    lati <- safe_coords(lati)
+    traj_lng <- safe_coords(traj_lng)
+    traj_lat <- safe_coords(traj_lat)
+    lng_targ <- safe_coords(lng_targ)
+    lat_targ <- safe_coords(lat_targ)
+    lng_true <- safe_coords(lng_true)
+    lat_true <- safe_coords(lat_true)
+    lng_poly <- safe_coords(lng_poly)
+    lat_poly <- safe_coords(lat_poly)
+    lng_ans_obj <- safe_coords(lng_ans_obj)
+    lat_ans_obj <- safe_coords(lat_ans_obj)
+    dr_point_lng <- safe_coords(dr_point_lng)
+    dr_point_lat <- safe_coords(dr_point_lat)
+    
+    ###########-------------END : downloaded json files issue solved here : safely handled the empty df and NA values--- THIS SOLVED THE MAP RENDERING ISSUE FOR THEME OBJECTS##################
+    
     #Print map
     if (mr == TRUE || length(ans) <= input$num_value || (length(lng_targ) == 0 && length(lng_true) == 0 && t == "theme-loc")
         || (length(long) == 0 && length(traj_lat) == 0 && (t == "nav-flag" || t == "nav-text" || t == "nav-arrow" || t == "nav-photo"))) {
