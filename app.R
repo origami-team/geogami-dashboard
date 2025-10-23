@@ -1251,397 +1251,383 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     }
     
     mr <- FALSE #Reinitialize variable
-    ### Rendering map
-    # 1. To render realworld map
-    # output$map <- renderLeaflet(map_shown)
-    # output$map <- renderLeaflet({
-    #   map_shown
-    #   map_shown%>%
-    #   leaflet(options = leafletOptions(minZoom = 17, maxZoom = 20)) %>%
-    #     addTiles() %>%
-    #     htmlwidgets::onRender("
-    #       function(el, x) {
-    #         var imageUrl = 'assets/vir_envs_layers/VirEnv_41.png';
-    #         var bounds = [
-    #           [0.0003628597122, 0.0002307207207],  // Southwest corner
-    #           [0.004459082914, 0.003717027207]     // Northeast corner
-    #         ];
-    #         var overlay = L.imageOverlay(imageUrl, bounds).addTo(this);
-    #         this.setView([0.0014684684685, 0.00200892857143], 17);  // (lat, lng), zoom
-    #         // Check for errors
-    #         overlay._image.onerror = function() {
-    #           alert('Failed to load image: ' + imageUrl);
-    #         };
-    #       }
-    #     ")
-    # })
 
+
+    ### Rendering map
 
     ## Extract virtual environment names which have INIT_TASK events, to exclude other events
     ## here having init-task twice for one task will cause an issue, this migth happen if user uses previous button
     # Get events where type = INIT_TASK 
     init_task_indices <- which(data[[1]]$events$type == "INIT_TASK") 
-    # Extract virEnvName and floor if 3d building for those events 
-    virEnvLayers <- character(0)      # for virtual environment layers / images names
-    virEnvNames <- character(0)       # for virtual environemnt names
-    sapply(
-      init_task_indices, function(i) { 
-        if (!is.null(data[[1]]$events$task$virEnvType[i])) {
-          val =  data[[1]]$events$task$virEnvType[i]
-          virEnvNames <<- c(virEnvNames, val)
+    message("----- init_task_indices: ")
+    print(init_task_indices)
 
-          if (!is.null(data[[1]]$events$task$floor[i]) && !is.na(data[[1]]$events$task$floor[i])) {
-            virEnvLayers <<- c(virEnvLayers, paste0(val , "_", data[[1]]$events$task$floor[i])) 
-          } 
-          else
-            virEnvLayers <<- c(virEnvLayers, val) 
-        } 
-        else 
-          { NA } 
-      }
-    )
+    if (is.null(data[[1]]$events$task$virEnvType[init_task_indices[input$num_value]])) {
+      # 1. To render realworld map
+      output$map <- renderLeaflet(map_shown)
+    } else {
+        # 2. To render virtual environment map
+        # Extract virEnvName and floor if 3d building for those events 
+        virEnvLayers <- character(0)      # for virtual environment layers / images names
+        virEnvNames <- character(0)       # for virtual environemnt names
+        sapply(
+          init_task_indices, function(i) { 
+            if (!is.null(data[[1]]$events$task$virEnvType[i])) {
+              val =  data[[1]]$events$task$virEnvType[i]
+              virEnvNames <<- c(virEnvNames, val)
 
-    # Load virtual environment properties from JSON
-    virEnvsProperties <- fromJSON("www/virEnvsProperties.json");
-
-    # 2. To render virtual environment map
-    output$map <- renderLeaflet({
-      # Default empty map
-      map_shown <- leaflet() %>%
-            addTiles() %>%
-        setView(lng = 7, lat = 51, zoom = 20)
-
-        # Conditions
-        if (mr == TRUE ||
-            length(ans) <= input$num_value ||
-            (length(lng_targ) == 0 && length(lng_true) == 0 && t == "theme-loc") ||
-            (length(long) == 0 && length(traj_lat) == 0 &&
-            (t %in% c("nav-flag", "nav-text", "nav-arrow", "nav-photo")))) {
-          
-          map_shown <- leaflet() %>%
-            addTiles() %>%
-            setView(lng = 7, lat = 51, zoom = 20)
-        }
-        
-        if (length(long) != 0 && length(traj_lat) == 0) {
-          map_shown <- leaflet() %>%
-            addTiles() %>%
-            addMarkers(
-              lng = unlist(long)[1],
-              lat = unlist(lati)[1],
-              icon = loc_marker_green
-            ) %>%
-            addCircles(
-              lng = unlist(long)[1],
-              lat = unlist(lati)[1],
-              radius = accuracy_rad,
-              opacity = 0.5
-            )
-        }
-        
-        if (length(long) != 0 && length(traj_lat) != 0) {
-          map_shown <- leaflet() %>%
-            addTiles() %>%
-            addMarkers(
-              lng = unlist(long)[1],
-              lat = unlist(lati)[1],
-              icon = loc_marker_green
-            ) %>%
-            addCircles(
-              lng = unlist(long)[1],
-              lat = unlist(lati)[1],
-              radius = accuracy_rad,
-              opacity = 0.5
-            ) %>%
-            addPolylines(
-              lng = unlist(traj_lng),
-              lat = unlist(traj_lat),
-              color = "red", weight = 2, opacity = 1, stroke = TRUE
-            )
-        }
-        
-        if (length(dr_point_lng) != 0) {
-          map_shown <- leaflet() %>%
-            addTiles() %>%
-            addPolylines(
-              lng = unlist(dr_point_lng),
-              lat = unlist(dr_point_lat),
-              color = "red", weight = 2, opacity = 1, stroke = TRUE
-            )
-        }
-        
-        if (length(lng_targ) != 0 && length(lng_true) != 0) {
-          map_shown <- leaflet() %>%
-            addTiles() %>%
-            addMarkers(
-              lng = tail(unlist(lng_targ), 1),
-              lat = tail(unlist(lat_targ), 1),
-              icon = loc_marker
-            ) %>%
-            addMarkers(
-              lng = tail(unlist(lng_true), 1),
-              lat = tail(unlist(lat_true), 1),
-              icon = loc_marker_green
-            ) %>%
-            addCircles(
-              lng = tail(unlist(lng_true), 1),
-              lat = tail(unlist(lat_true), 1),
-              radius = accuracy_rad
-            )
-        }
-        
-        if (length(lng_targ) == 0 && length(lng_true) != 0) {
-          map_shown <- leaflet() %>%
-            addTiles() %>%
-            addMarkers(
-              lng = tail(unlist(lng_true), 1),
-              lat = tail(unlist(lat_true), 1),
-              icon = loc_marker_green
-            ) %>%
-            addCircles(
-              lng = tail(unlist(lng_true), 1),
-              lat = tail(unlist(lat_true), 1),
-              radius = accuracy_rad
-            )
-        }
-        
-        if (length(lng_poly) != 0 && length(lng_ans_obj) == 0) {
-          map_shown <- leaflet() %>%
-            addTiles() %>%
-            addPolygons(
-              lng = unlist(lng_poly),
-              lat = unlist(lat_poly),
-              color = "blue", fillColor = "grey", weight = 2, opacity = 1
-            )
-        }
-        
-        if (length(lng_poly) != 0 && length(lng_ans_obj) != 0) {
-          map_shown <- leaflet() %>%
-            addTiles() %>%
-            addMarkers(
-              lng = tail(unlist(lng_ans_obj), 1),
-              lat = tail(unlist(lat_ans_obj), 1),
-              icon = loc_marker
-            ) %>%
-            addPolygons(
-              lng = unlist(lng_poly),
-              lat = unlist(lat_poly),
-              color = "blue", fillColor = "grey", weight = 2, opacity = 1
-            )
-        }
-
-      # Add overlay with zIndex control
-      map_shown %>%
-          htmlwidgets::onRender("
-          function(el, x, data) {
-            var map = this;
-            var task_number = data.task_number;
-            var virEnvName = data.virEnvName;
-            var virEnvLayer = data.virEnvLayer;
-
-            // console.log('task_number from R:', task_number);
-            // console.log('virEnvName from R:', virEnvName);
-            // console.log('virEnvLayer from R:', virEnvLayer);
-
-            // Set min and max zoom levels
-            map.options.minZoom = 17;
-            map.options.maxZoom = 20;
-            map.on('zoomend', function() {
-              console.log('Current zoom level:', map.getZoom());
-            });
-              
-            // Define imageUrl variable
-            var imageUrl;
-            if (virEnvName !== null && virEnvName !== undefined && virEnvName !== 'NA') {
-              imageUrl = 'assets/vir_envs_layers/' + virEnvLayer + '.png';
-            } else {
-              imageUrl = 'assets/vir_envs_layers/VirEnv_1.png';
-            }
-
-            // ########################
-            // overlayCoords: 4 corners of where the image should appear
-            var overlayCoords = data.virEnvsProperties[virEnvName].overlayCoords;
-
-            // Compute SW/NE bounds from overlayCoords
-            var lats = overlayCoords.map(c => c[0]);
-            var lngs = overlayCoords.map(c => c[1]);
-            var sw = [Math.min(...lats), Math.min(...lngs)];
-            var ne = [Math.max(...lats), Math.max(...lngs)];
-
-            // ########################
-            // bounds: constrain map panning/zooming to these bounds
-            var mapBounds = data.virEnvsProperties[virEnvName].bounds;
-
-            // Add image overlay
-            var overlay = L.imageOverlay(imageUrl, [sw, ne], { zIndex: 10 }).addTo(this);
-
-            // Constrain map to bounds
-            this.setMaxBounds(mapBounds);
-
-            // Fit map view to overlay
-            this.fitBounds([sw, ne]);
-            }
-        ", data = list(task_number = input$num_value,
-                      virEnvName = virEnvNames[input$num_value],
-                      virEnvLayer = virEnvLayers[input$num_value],
-                      virEnvsProperties = virEnvsProperties)
+              if (!is.null(data[[1]]$events$task$floor[i]) && !is.na(data[[1]]$events$task$floor[i])) {
+                virEnvLayers <<- c(virEnvLayers, paste0(val , "_", data[[1]]$events$task$floor[i])) 
+              } 
+              else
+                virEnvLayers <<- c(virEnvLayers, val) 
+            } 
+            else 
+              { NA } 
+          }
         )
-      })
-      
-      # Convert abbreviation for type task
-      if (!is.na(t)) {
-        if (t == "nav-flag") {
-          t <- "Navigation to flag"
-        }
-        if (t == "nav-arrow") {
-          t <- "Navigation with arrow"
-        }
-        if (t == "nav-photo") {
-          t <- "Navigation via photo"
-        }
-        if (t == "nav-text") {
-          t <- "Navigation via text"
-        }
-        if (t == "theme-loc") {
-          t <- "Self location"
-        }
-        if (t == "theme-object") {
-          t <- "Object location"
-        }
-        if (t == "theme-direction") {
-          t <- "Direction determination"
-        }
-        if (t == "free") {
-          t <- "Free"
-        }
-        if (t == "info") {
-          t <- "Information"
-        }
-        if (t == "") {
-          t <- "No task exists with this number"
-        }
-      }
-      
-      output$mapLegend <- renderText({paste("Task type:",t)})
-      
-      #Download map
-      output$downloadMap <- downloadHandler(
-        filename = function() {
-          paste("map_", Sys.Date(), ".html", sep="")
-        },
-        content = function(file) {
-          m <- saveWidget(map_shown, file = file, selfcontained = TRUE)
-        }
-      )
-      
-      
-      #photo code starts---------------------
-      cou <- 1 #counter
-      pict <- list()
-      ans_photo <- list()
-      
-      for (i in 1:(length(id)-1)) {
-        if ((!is.na(id[i]) && (i != 1) && (id[i] != id[i + 1])) || i == (length(id) - 1)) {
-          cou <- cou + 1
-          pict <- append(pict, unlist(data[[1]]$events$task$question$photo[[i]]))
-          ans_photo <- append(ans_photo, unlist(data[[1]]$events$answer$photo[[i]]))
-        }
-      }
-      
-      if (length(pict) != 0) { #Photos in assignment
-        if (input$num_value <= length(pict) && !is.na(pict[[input$num_value]]) && pict[[input$num_value]] != "") {
-          # Render photo display with download buttons
-          output$photo_display <- renderUI({
+
+        # Load virtual environment properties from JSON
+        virEnvsProperties <- fromJSON("www/virEnvsProperties.json");
+
+        # render virtual environment map
+        output$map <- renderLeaflet({
+          # Default empty map
+          map_shown <- leaflet() %>%
+                addTiles() %>%
+            setView(lng = 7, lat = 51, zoom = 20)
+
+            # Conditions
+            if (mr == TRUE ||
+                length(ans) <= input$num_value ||
+                (length(lng_targ) == 0 && length(lng_true) == 0 && t == "theme-loc") ||
+                (length(long) == 0 && length(traj_lat) == 0 &&
+                (t %in% c("nav-flag", "nav-text", "nav-arrow", "nav-photo")))) {
+              
+              map_shown <- leaflet() %>%
+                addTiles() %>%
+                setView(lng = 7, lat = 51, zoom = 20)
+            }
             
-            photo_url <- pict[[input$num_value]]
-            
-            output[["download_image"]] <- downloadHandler(
-              filename = function() {
-                paste("image_", t, ".jpg", sep = "")
-              },
-              content = function(file) {
-                download.file(photo_url, file, mode = "wb")
-              }
-            )
-            
-            # Create a flex container for images
-            div(style = "display: flex; flex-wrap: wrap; gap: 20px;",
-                tagList(
-                  tags$div(style = "flex: 0 1 200px; display: inline-block; text-align: center;",
-                          tags$h4(paste("Assignment for", t)),
-                          tags$img(src = photo_url, height = "500px", style = "margin: 10px; border: 1px solid #ccc;"),
-                          downloadButton("download_image"), label = "Download", class = "btn btn-primary", style = "margin-top: 10px;")
+            if (length(long) != 0 && length(traj_lat) == 0) {
+              map_shown <- leaflet() %>%
+                addTiles() %>%
+                addMarkers(
+                  lng = unlist(long)[1],
+                  lat = unlist(lati)[1],
+                  icon = loc_marker_green
+                ) %>%
+                addCircles(
+                  lng = unlist(long)[1],
+                  lat = unlist(lati)[1],
+                  radius = accuracy_rad,
+                  opacity = 0.5
                 )
-            )
-          })
-        }
-      }
-      
-      if (length(ans_photo) != 0) { #Photos in answer
-        if (input$num_value <= length(ans_photo) && !is.na(ans_photo[[input$num_value]]) && ans_photo[[input$num_value]] != "") {
-          # Render photo display with download buttons
-          output$photo_display <- renderUI({
+            }
             
-            photo_ans_url <- ans_photo[[input$num_value]]
-            
-            output[["download_image_2"]] <- downloadHandler(
-              filename = function() {
-                paste("image_", t, ".jpg", sep = "")
-              },
-              content = function(file) {
-                download.file(photo_ans_url, file, mode = "wb")
-              }
-            )
-            
-            # Create a flex container for images
-            div(style = "display: flex; flex-wrap: wrap; gap: 20px;", 
-                tagList(
-                  tags$div(style = "flex: 0 1 200px; display: inline-block; text-align: center;",
-                          tags$h4(paste("Answer for", t)),
-                          tags$img(src = photo_ans_url, height = "500px", style = "margin: 10px; border: 1px solid #ccc;"),
-                          downloadButton("download_image_2"), label = "Download", class = "btn btn-primary", style = "margin-top: 10px; background-color: #0CD1E8 ")
+            if (length(long) != 0 && length(traj_lat) != 0) {
+              map_shown <- leaflet() %>%
+                addTiles() %>%
+                addMarkers(
+                  lng = unlist(long)[1],
+                  lat = unlist(lati)[1],
+                  icon = loc_marker_green
+                ) %>%
+                addCircles(
+                  lng = unlist(long)[1],
+                  lat = unlist(lati)[1],
+                  radius = accuracy_rad,
+                  opacity = 0.5
+                ) %>%
+                addPolylines(
+                  lng = unlist(traj_lng),
+                  lat = unlist(traj_lat),
+                  color = "red", weight = 2, opacity = 1, stroke = TRUE
                 )
+            }
+            
+            if (length(dr_point_lng) != 0) {
+              map_shown <- leaflet() %>%
+                addTiles() %>%
+                addPolylines(
+                  lng = unlist(dr_point_lng),
+                  lat = unlist(dr_point_lat),
+                  color = "red", weight = 2, opacity = 1, stroke = TRUE
+                )
+            }
+            
+            if (length(lng_targ) != 0 && length(lng_true) != 0) {
+              map_shown <- leaflet() %>%
+                addTiles() %>%
+                addMarkers(
+                  lng = tail(unlist(lng_targ), 1),
+                  lat = tail(unlist(lat_targ), 1),
+                  icon = loc_marker
+                ) %>%
+                addMarkers(
+                  lng = tail(unlist(lng_true), 1),
+                  lat = tail(unlist(lat_true), 1),
+                  icon = loc_marker_green
+                ) %>%
+                addCircles(
+                  lng = tail(unlist(lng_true), 1),
+                  lat = tail(unlist(lat_true), 1),
+                  radius = accuracy_rad
+                )
+            }
+            
+            if (length(lng_targ) == 0 && length(lng_true) != 0) {
+              map_shown <- leaflet() %>%
+                addTiles() %>%
+                addMarkers(
+                  lng = tail(unlist(lng_true), 1),
+                  lat = tail(unlist(lat_true), 1),
+                  icon = loc_marker_green
+                ) %>%
+                addCircles(
+                  lng = tail(unlist(lng_true), 1),
+                  lat = tail(unlist(lat_true), 1),
+                  radius = accuracy_rad
+                )
+            }
+            
+            if (length(lng_poly) != 0 && length(lng_ans_obj) == 0) {
+              map_shown <- leaflet() %>%
+                addTiles() %>%
+                addPolygons(
+                  lng = unlist(lng_poly),
+                  lat = unlist(lat_poly),
+                  color = "blue", fillColor = "grey", weight = 2, opacity = 1
+                )
+            }
+            
+            if (length(lng_poly) != 0 && length(lng_ans_obj) != 0) {
+              map_shown <- leaflet() %>%
+                addTiles() %>%
+                addMarkers(
+                  lng = tail(unlist(lng_ans_obj), 1),
+                  lat = tail(unlist(lat_ans_obj), 1),
+                  icon = loc_marker
+                ) %>%
+                addPolygons(
+                  lng = unlist(lng_poly),
+                  lat = unlist(lat_poly),
+                  color = "blue", fillColor = "grey", weight = 2, opacity = 1
+                )
+            }
+
+          # Add overlay with zIndex control
+          map_shown %>%
+              htmlwidgets::onRender("
+              function(el, x, data) {
+                var map = this;
+                var task_number = data.task_number;
+                var virEnvName = data.virEnvName;
+                var virEnvLayer = data.virEnvLayer;
+
+                // console.log('task_number from R:', task_number);
+                // console.log('virEnvName from R:', virEnvName);
+                // console.log('virEnvLayer from R:', virEnvLayer);
+
+                // Set min and max zoom levels
+                map.options.minZoom = 17;
+                map.options.maxZoom = 20;
+                map.on('zoomend', function() {
+                  console.log('Current zoom level:', map.getZoom());
+                });
+                  
+                // Define imageUrl variable
+                var imageUrl;
+                if (virEnvName !== null && virEnvName !== undefined && virEnvName !== 'NA') {
+                  imageUrl = 'assets/vir_envs_layers/' + virEnvLayer + '.png';
+                } else {
+                  imageUrl = 'assets/vir_envs_layers/VirEnv_1.png';
+                }
+
+                // ########################
+                // overlayCoords: 4 corners of where the image should appear
+                var overlayCoords = data.virEnvsProperties[virEnvName].overlayCoords;
+
+                // Compute SW/NE bounds from overlayCoords
+                var lats = overlayCoords.map(c => c[0]);
+                var lngs = overlayCoords.map(c => c[1]);
+                var sw = [Math.min(...lats), Math.min(...lngs)];
+                var ne = [Math.max(...lats), Math.max(...lngs)];
+
+                // ########################
+                // bounds: constrain map panning/zooming to these bounds
+                var mapBounds = data.virEnvsProperties[virEnvName].bounds;
+
+                // Add image overlay
+                var overlay = L.imageOverlay(imageUrl, [sw, ne], { zIndex: 10 }).addTo(this);
+
+                // Constrain map to bounds
+                this.setMaxBounds(mapBounds);
+
+                // Fit map view to overlay
+                this.fitBounds([sw, ne]);
+                }
+            ", data = list(task_number = input$num_value,
+                          virEnvName = virEnvNames[input$num_value],
+                          virEnvLayer = virEnvLayers[input$num_value],
+                          virEnvsProperties = virEnvsProperties)
             )
           })
-        }
-      }
-      
-      if (length(ans_photo) == 0 && length(pict) == 0) {
-        output$photo_display <- renderUI({
-          "No photos for this game"
-        })
-      }
-      
-      if (length(pict) != 0 && input$num_value > length(pict)) {
-        output$photo_display <- renderUI({
-          "No task exists with this number"
-        })
-      }
-      
-      if (length(pict) != 0 && length(ans_photo) != 0) {
-        if (input$num_value <= length(ans_photo) && (is.na(ans_photo[[input$num_value]]) || ans_photo[[input$num_value]] == "") && (is.na(pict[[input$num_value]]) || pict[[input$num_value]] == "")) {
-          output$photo_display <- renderUI({
-            "No photos for this task"
-          })
-        }
-      }
-      if (length(pict) == 0 && length(ans_photo) != 0) {
-        if (input$num_value <= length(ans_photo) && (is.na(ans_photo[[input$num_value]]) || ans_photo[[input$num_value]] == "")) {
-          output$photo_display <- renderUI({
-            "No photos for this task"
-          })
-        }
-      }
-      if (length(pict) != 0 && length(ans_photo) == 0) {
-        if (input$num_value <= length(pict) && (is.na(pict[[input$num_value]]) || pict[[input$num_value]] == "")) {
-          output$photo_display <- renderUI({
-            "No photos for this task"
-          })
-        }
-      }
+          
+          # Convert abbreviation for type task
+          if (!is.na(t)) {
+            if (t == "nav-flag") {
+              t <- "Navigation to flag"
+            }
+            if (t == "nav-arrow") {
+              t <- "Navigation with arrow"
+            }
+            if (t == "nav-photo") {
+              t <- "Navigation via photo"
+            }
+            if (t == "nav-text") {
+              t <- "Navigation via text"
+            }
+            if (t == "theme-loc") {
+              t <- "Self location"
+            }
+            if (t == "theme-object") {
+              t <- "Object location"
+            }
+            if (t == "theme-direction") {
+              t <- "Direction determination"
+            }
+            if (t == "free") {
+              t <- "Free"
+            }
+            if (t == "info") {
+              t <- "Information"
+            }
+            if (t == "") {
+              t <- "No task exists with this number"
+            }
+          }
+          
+          output$mapLegend <- renderText({paste("Task type:",t)})
+          
+          #Download map
+          output$downloadMap <- downloadHandler(
+            filename = function() {
+              paste("map_", Sys.Date(), ".html", sep="")
+            },
+            content = function(file) {
+              m <- saveWidget(map_shown, file = file, selfcontained = TRUE)
+            }
+          )
+          
+          
+          #photo code starts---------------------
+          cou <- 1 #counter
+          pict <- list()
+          ans_photo <- list()
+          
+          for (i in 1:(length(id)-1)) {
+            if ((!is.na(id[i]) && (i != 1) && (id[i] != id[i + 1])) || i == (length(id) - 1)) {
+              cou <- cou + 1
+              pict <- append(pict, unlist(data[[1]]$events$task$question$photo[[i]]))
+              ans_photo <- append(ans_photo, unlist(data[[1]]$events$answer$photo[[i]]))
+            }
+          }
+          
+          if (length(pict) != 0) { #Photos in assignment
+            if (input$num_value <= length(pict) && !is.na(pict[[input$num_value]]) && pict[[input$num_value]] != "") {
+              # Render photo display with download buttons
+              output$photo_display <- renderUI({
+                
+                photo_url <- pict[[input$num_value]]
+                
+                output[["download_image"]] <- downloadHandler(
+                  filename = function() {
+                    paste("image_", t, ".jpg", sep = "")
+                  },
+                  content = function(file) {
+                    download.file(photo_url, file, mode = "wb")
+                  }
+                )
+                
+                # Create a flex container for images
+                div(style = "display: flex; flex-wrap: wrap; gap: 20px;",
+                    tagList(
+                      tags$div(style = "flex: 0 1 200px; display: inline-block; text-align: center;",
+                              tags$h4(paste("Assignment for", t)),
+                              tags$img(src = photo_url, height = "500px", style = "margin: 10px; border: 1px solid #ccc;"),
+                              downloadButton("download_image"), label = "Download", class = "btn btn-primary", style = "margin-top: 10px;")
+                    )
+                )
+              })
+            }
+          }
+          
+          if (length(ans_photo) != 0) { #Photos in answer
+            if (input$num_value <= length(ans_photo) && !is.na(ans_photo[[input$num_value]]) && ans_photo[[input$num_value]] != "") {
+              # Render photo display with download buttons
+              output$photo_display <- renderUI({
+                
+                photo_ans_url <- ans_photo[[input$num_value]]
+                
+                output[["download_image_2"]] <- downloadHandler(
+                  filename = function() {
+                    paste("image_", t, ".jpg", sep = "")
+                  },
+                  content = function(file) {
+                    download.file(photo_ans_url, file, mode = "wb")
+                  }
+                )
+                
+                # Create a flex container for images
+                div(style = "display: flex; flex-wrap: wrap; gap: 20px;", 
+                    tagList(
+                      tags$div(style = "flex: 0 1 200px; display: inline-block; text-align: center;",
+                              tags$h4(paste("Answer for", t)),
+                              tags$img(src = photo_ans_url, height = "500px", style = "margin: 10px; border: 1px solid #ccc;"),
+                              downloadButton("download_image_2"), label = "Download", class = "btn btn-primary", style = "margin-top: 10px; background-color: #0CD1E8 ")
+                    )
+                )
+              })
+            }
+          }
+          
+          if (length(ans_photo) == 0 && length(pict) == 0) {
+            output$photo_display <- renderUI({
+              "No photos for this game"
+            })
+          }
+          
+          if (length(pict) != 0 && input$num_value > length(pict)) {
+            output$photo_display <- renderUI({
+              "No task exists with this number"
+            })
+          }
+          
+          if (length(pict) != 0 && length(ans_photo) != 0) {
+            if (input$num_value <= length(ans_photo) && (is.na(ans_photo[[input$num_value]]) || ans_photo[[input$num_value]] == "") && (is.na(pict[[input$num_value]]) || pict[[input$num_value]] == "")) {
+              output$photo_display <- renderUI({
+                "No photos for this task"
+              })
+            }
+          }
+          if (length(pict) == 0 && length(ans_photo) != 0) {
+            if (input$num_value <= length(ans_photo) && (is.na(ans_photo[[input$num_value]]) || ans_photo[[input$num_value]] == "")) {
+              output$photo_display <- renderUI({
+                "No photos for this task"
+              })
+            }
+          }
+          if (length(pict) != 0 && length(ans_photo) == 0) {
+            if (input$num_value <= length(pict) && (is.na(pict[[input$num_value]]) || pict[[input$num_value]] == "")) {
+              output$photo_display <- renderUI({
+                "No photos for this task"
+              })
+            }
+          }
       
       #photo code ends here-----------------------------------
-      
+      }
     })
   
   #####End of big table
