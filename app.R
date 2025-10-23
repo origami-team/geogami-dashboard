@@ -11,6 +11,7 @@ library(jsonlite)
 library(bslib)
 library(htmlwidgets)
 library(httr)
+library(zip)
 iris$Species <- NULL
 # Define the directory where JSON files are stored
 json_dir <- getwd()  # or set to your specific directory, e.g., "data/json"
@@ -46,9 +47,9 @@ fetch_games_data_from_server <- function(url, token) {
 ui <- page_sidebar(
   title = div(
     style = "display: flex; align-items: center; gap: 20px;",
-    tags$img(src = "https://geogami.ifgi.de/pictures/logo/icon.png", height = "60px"),
+    tags$img(src = "https://geogami.ifgi.de/wp-content/uploads/2020/03/Unbenannt-7.png", height = "60px"),
     tags$div(
-      tags$h1("Welcome to the GeoGami dashboard!", style = "margin: 0; font-size: 24px;"),
+      tags$h1("Welcome to the dashboard!", style = "margin: 0; font-size: 24px;"),
       tags$a("app.geogami.ifgi.de", href = "https://app.geogami.ifgi.de/", style = "font-size: 14px; color: white;")
     )
   ),
@@ -177,7 +178,7 @@ ui <- page_sidebar(
     conditionalPanel(
       condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
       div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-        selectizeInput(
+        selectInput(
         inputId = "selected_games",
         label = "Select your game:",
         choices = NULL  # Leave it empty initially
@@ -189,29 +190,15 @@ ui <- page_sidebar(
     conditionalPanel(
       condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
       div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-          selectizeInput(
+          selectInput(
             inputId = "selected_files",
             label = "Select the players:",
             choices = NULL,  # Leave it empty initially
-            multiple = TRUE,
-            options = list(
-              placeholder = "Start typing to search...",
-              plugins = list('remove_button'),
-              onChange = I('
-              function(value) {
-                if (value.includes("ALL")) {
-                  // Select all files except "ALL"
-                  var allFiles = Object.keys(this.options).filter(k => k !== "ALL");
-                  this.setValue(allFiles);            
-                  this.removeOption("ALL");           
-                }
-              }
-            ')
-            )
+            multiple = TRUE
           ),
           actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
           textOutput("info_download"),
-          actionButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;")
+          downloadButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;")
         )
       ),
     
@@ -223,7 +210,8 @@ ui <- page_sidebar(
 
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
-      "Version 1.5.1 - 13:18 023.10.2025"
+      "Version 1.4.1 - 13:18 023.10.2025"
+
     )
   ),
   
@@ -374,6 +362,10 @@ server <- function(input, output, session) {
   # Store access token reactively
   accessToken_rv <- reactiveVal()
   track_data_rv <- reactiveVal()
+  
+  choices_rv <- reactiveVal() #FOR ENSURING THAT RIGHT NAME IS REFLECTED IN SELECTIZEINPUT INSTEAD OF MONGO DB IDs
+  
+  
   apiURL_rv <- reactiveVal("https://api.geogami.ifgi.de")
 
   # Observe the URL query string for the token parameter
@@ -411,9 +403,8 @@ server <- function(input, output, session) {
     }
 
     ### 2. Populate select input for games
-    updateSelectizeInput(session, "selected_games",
-                          choices = setNames(games_id, games_name),
-                          server = TRUE)
+    updateSelectInput(session, "selected_games",
+                          choices = setNames(games_id, games_name))
   
     output$info_download <- renderText({
         ""
@@ -446,9 +437,12 @@ server <- function(input, output, session) {
         paste0(tracks_data$players, " - ", tracks_data$createdAt)
       )
       
-      updateSelectizeInput(session, "selected_files",
-                          choices = choices,
-                          server = TRUE)
+      # saving this mapping for reuse in a reactive variable
+      choices_rv(choices)
+      
+      
+      updateSelectInput(session, "selected_files",
+                          choices = choices)
 
       output$info_download <- renderText({
         ""
@@ -456,21 +450,69 @@ server <- function(input, output, session) {
     }
   })
 
-  # Download json file
+  # # Download json file
+  # output$download_json <- downloadHandler(
+  #   filename = function() {
+  #     selected_track_data = track_data_rv()
+  #     paste0(selected_track_data$players, " - ", selected_track_data$createdAt,".json")
+  #   },
+  #   content = function(file) {
+  #     req(input$selected_files)  # Ensure some files are selected
+  #     list_to_save <- track_data_rv()  # Your reactive list
+  # 
+  #     # Save to JSON
+  #     jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
+  #   }
+  # )
+
+  # Downloading one or more JSON files
   output$download_json <- downloadHandler(
     filename = function() {
-      selected_track_data = track_data_rv()
-      paste0(selected_track_data$players, " - ", selected_track_data$createdAt,".json")
+      if (length(input$selected_files) > 1) {
+        paste0("geogami_tracks_", Sys.Date(), ".zip")
+      } else {
+        selected_track_data <- track_data_rv()
+        paste0(selected_track_data$players, " - ", selected_track_data$createdAt, ".json")
+      }
     },
     content = function(file) {
-      req(input$selected_files)  # Ensure some files are selected
-      list_to_save <- track_data_rv()  # Your reactive list
+      req(input$selected_files)
 
-      # Save to JSON
-      jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
+      # --- MULTIPLE FILES SELECTED ---
+      if (length(input$selected_files) > 1) {
+        # Creating a temporary directory to hold all the files
+        tmpdir <- tempdir()
+        json_files <- c()
+
+        for (selected_id in input$selected_files) {
+          url <- paste0(apiURL_rv(), "/track/", selected_id)
+          track_data <- fetch_games_data_from_server(url, accessToken_rv())
+
+          # Handling empty results
+          if (is.null(track_data)) next
+
+          # File name for each JSON
+          fname <- file.path(tmpdir, paste0(selected_id, ".json"))
+          jsonlite::write_json(track_data, path = fname, pretty = TRUE, auto_unbox = TRUE)
+          json_files <- c(json_files, fname)
+        }
+
+        # Zip all JSON files together
+        zip::zipr(zipfile = file, files = json_files, recurse = FALSE)
+
+      } else {
+        # --- SINGLE FILE SELECTED ---
+        selected_id <- input$selected_files[1]
+        url <- paste0(apiURL_rv(), "/track/", selected_id)
+        track_data <- fetch_games_data_from_server(url, accessToken_rv())
+
+        jsonlite::write_json(track_data, path = file, pretty = TRUE, auto_unbox = TRUE)
+      }
     }
   )
-
+  
+  
+  
   ### 5. Reset file selector when reset button clicked
   observeEvent(input$reset, {
     tracks_data <- selected_game_tracks_rv()
@@ -481,20 +523,22 @@ server <- function(input, output, session) {
         paste0(tracks_data$players, " - ", tracks_data$createdAt)
       )
       
-      updateSelectizeInput(session, "selected_files",
+      updateSelectInput(session, "selected_files",
                           choices = choices,
-                          selected = NULL,
-                          server = TRUE)
+                          selected = NULL)
     }
   })
 
   # 6. Select single file to view
   output$file_selector_ui <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
 
-    selectizeInput("selected_data_file",
+    selectInput("selected_data_file",
                    "Selected Players:",
-                choices = input$selected_files,
+                   choices = choices_rv(),
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
@@ -525,108 +569,140 @@ server <- function(input, output, session) {
     })
   })
 
+  # ### 8. Reactive: load multiple json files for comparison
+  # load_multiple <- reactive({
+  #   req(input$selected_multiple_files)
+  # 
+  #   # If multiple IDs are found, use only the last one
+  #   sel <- input$selected_multiple_files[length(input$selected_multiple_files)]
+  # 
+  #   lapply(sel, function(file) {
+  #     track_id <- sel
+  #     # Construct the API URL
+  #     url <- paste0(apiURL_rv(), "/track/", track_id)
+  #     # Fetch and return the JSON data from the server
+  #     track_data <- fetch_games_data_from_server(url, accessToken_rv())
+  #     track_data_rv(track_data)  # Store the data in reactive value
+  #     return(track_data)
+  #   })
+  # })
+
+  
   ### 8. Reactive: load multiple json files for comparison
   load_multiple <- reactive({
     req(input$selected_multiple_files)
-
-    # If multiple IDs are found, use only the last one
-    sel <- input$selected_multiple_files[length(input$selected_multiple_files)]
-
-    lapply(sel, function(file) {
-      track_id <- sel
-      # Construct the API URL
+    
+    # Taking all selected IDs
+    sel <- input$selected_multiple_files
+    
+    # Fetching the data for each selected track
+    data_list <- lapply(sel, function(track_id) {
       url <- paste0(apiURL_rv(), "/track/", track_id)
-      # Fetch and return the JSON data from the server
       track_data <- fetch_games_data_from_server(url, accessToken_rv())
-      track_data_rv(track_data)  # Store the data in reactive value
       return(track_data)
     })
+    
+    # updating track_data_rv to hold a list of all
+    track_data_rv(data_list)
+    
+    return(data_list)
   })
-
+  
+  
+  
+  
   ### 9. UI: multiple file selector for comparison (tables, graphics, maps, photos)
   # UI for Compare Players - with select/deselect buttons
   output$file_selector_ui1 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
 
     tagList(
-      selectizeInput(
+      selectInput(
         "selected_multiple_files", 
         "Selected Players:", 
-                choices = input$selected_files,
+        choices = choices_rv(),
                 selected = input$selected_files,
-        multiple = TRUE,
-        options = list(
-          plugins = list('remove_button')
-        )
-      ),
-      # Add select/deselect buttons
-      actionButton("select_all_players", "Select All"),
-      actionButton("deselect_all_players", "Reset")
+        multiple = TRUE
+      )
+      # ,
+      # # Add select/deselect buttons
+      # actionButton("select_all_players", "Select All"),
+      # actionButton("deselect_all_players", "Select None")
     )
   })
   
   
   ####-------------'select and deselect all' buttons logic for file_selector_ui 1 that is 'compare' tab------------
   # Select all players
-  observeEvent(input$select_all_players, {
-    req(input$selected_files)
-    updateSelectizeInput(
-      session,
-      "selected_multiple_files",
-      selected = input$selected_files
-    )
-  })
-  
-  # Deselect all players
-  observeEvent(input$deselect_all_players, {
-    updateSelectizeInput(
-      session,
-      "selected_multiple_files",
-      selected = character(0)
-    )
-  })
+  # observeEvent(input$select_all_players, {
+  #   req(choices_rv())
+  #   req(input$selected_files)
+  #   updateSelectInput(
+  #     session,
+  #     "selected_multiple_files",
+  #     selected = input$selected_files
+  #   )
+  # })
+  # 
+  # # Deselect all players
+  # observeEvent(input$deselect_all_players, {
+  #   req(choices_rv())
+  #   updateSelectInput(
+  #     session,
+  #     "selected_multiple_files",
+  #     selected = character(0)
+  #   )
+  # })
   ####-------------'select and deselect all' buttons logic for file_selector_ui 1 that is 'compare' tab ENDS------------
   
   
   
   ##### Filters for comparing Graphics starts
   output$file_selector_ui2 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
     
     tagList(
-      selectizeInput(
-        "selected_multiple_files2",  
+      selectInput(
+        "selected_multiple_files",  
         "Selected Players:", 
-                choices = input$selected_files,
+        choices = choices_rv(),
                 selected = input$selected_files,
-        multiple = TRUE,
-        options = list(plugins = list('remove_button'))
-      ),
-      actionButton("select_all_players2", "Select All"),
-      actionButton("deselect_all_players2", "Reset")
+        multiple = TRUE
+      )
+      # ,
+      # actionButton("select_all_players2", "Select All"),
+      # actionButton("deselect_all_players2", "Select None")
     )
   })
   
   
   ####-------------'select and deselect all' buttons logic for file_selector_ui2 that is 'stats' tab------------
   # Select all players (file_selector_ui2)
-  observeEvent(input$select_all_players2, {
-    req(input$selected_files)
-    updateSelectizeInput(
-      session,
-      "selected_multiple_files2",
-      selected = input$selected_files
-    )
-  })
-  
-  # Deselect all players (file_selector_ui2)
-  observeEvent(input$deselect_all_players2, {
-    updateSelectizeInput(
-      session,
-      "selected_multiple_files2",
-      selected = character(0)
-    )
-  })
+  # observeEvent(input$select_all_players2, {
+  #   req(choices_rv())
+  #   req(input$selected_files)
+  #   updateSelectInput(
+  #     session,
+  #     "selected_multiple_files2",
+  #     selected = input$selected_files
+  #   )
+  # })
+  # 
+  # # Deselect all players (file_selector_ui2)
+  # observeEvent(input$deselect_all_players2, {
+  #   req(choices_rv())
+  #   updateSelectInput(
+  #     session,
+  #     "selected_multiple_files2",
+  #     selected = character(0)
+  #   )
+  # })
   ####-------------'select and deselect all' buttons logic for file_selector_ui2 that is 'stats' tab ENDS------------
   
   
@@ -635,22 +711,28 @@ server <- function(input, output, session) {
   
   ##### Filter for maps
   output$file_selector_ui3 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
     
-    selectizeInput("selected_data_file",
+    selectInput("selected_data_file",
                    "Selected Players: ",
-                choices = input$selected_files,
+                   choices = choices_rv(),
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
   
   ##### Filter for photos
   output$file_selector_ui4 <- renderUI({
+    
+    req(choices_rv())  # ensuring here that the choices are ready
+    
     req(input$selected_files)
     
-    selectizeInput("selected_data_file",
+    selectInput("selected_data_file",
                    "Selected Players: ",
-                choices = input$selected_files,
+                   choices = choices_rv(),
                    selected = input$selected_files[1],
                    multiple = FALSE)
   })
@@ -888,7 +970,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
           t <- type_task[i]
           if (type_task[i] == "theme-object" && (cou == input$num_value)) {
             lng_ans_obj <- append(lng_ans_obj, targ[[i]][1])
-            lat_ans_obj <- append(lng_ans_obj, targ[[i]][2])
+            lat_ans_obj <- append(lat_ans_obj, targ[[i]][2])
           }
         }
         if ((type_task[i] == "free") && (cou == input$num_value) && length(drawing_point_lat) != 0 && !is.na(drawing_point_lat[[i]]) && ans_type[[i]] == "DRAW") {
@@ -1102,17 +1184,16 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
       
       tagList(
-        selectizeInput(
+        selectInput(
           "selected_task_ids",
           "Filter by Task ID:",
           choices = task_ids,
           selected = task_ids,   # initially all
-          multiple = TRUE,
-          options = list(plugins = list('remove_button'))
+          multiple = TRUE
         ),
         # Add two action buttons below the dropdown
         actionButton("select_all_tasks", "Select All"),
-        actionButton("deselect_all_tasks", "Reset")
+        actionButton("deselect_all_tasks", "Select None")
       )
     })
     
@@ -1137,11 +1218,11 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     observeEvent(input$select_all_tasks, {
       req(df_react())
       task_ids <- seq_len(nrow(df_react()))
-      updateSelectizeInput(session, "selected_task_ids", selected = task_ids)
+      updateSelectInput(session, "selected_task_ids", selected = task_ids)
     })
     
     observeEvent(input$deselect_all_tasks, {
-      updateSelectizeInput(session, "selected_task_ids", selected = character(0))
+      updateSelectInput(session, "selected_task_ids", selected = character(0))
     })
     
     #---------logic for select/deselect all ends ----------------------
@@ -2046,10 +2127,9 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     choices <- c("All Files" = "ALL", files)
     
-    updateSelectizeInput(session, "selected_files",
+    updateSelectInput(session, "selected_files",
                          choices = choices,
-                         selected = NULL,
-                         server = TRUE)
+                         selected = NULL)
     
     output$info_download <- renderText({
       ""
@@ -2303,7 +2383,7 @@ observeEvent(req(input$selected_data_file, input$num_value), {
           t <- type_task[i]
           if (type_task[i] == "theme-object" && (cou == input$num_value)) {
             lng_ans_obj <- append(lng_ans_obj, targ[[i]][1])
-            lat_ans_obj <- append(lng_ans_obj, targ[[i]][2])
+            lat_ans_obj <- append(lat_ans_obj, targ[[i]][2])
           }
         }
         if ((type_task[i] == "free") && (cou == input$num_value) && length(drawing_point_lat) != 0 && !is.na(drawing_point_lat[[i]]) && ans_type[[i]] == "DRAW") {
@@ -2515,13 +2595,12 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
       
       tagList(
-        selectizeInput(
+        selectInput(
           "selected_task_ids",
           "Filter by Task ID:",
           choices = task_ids,
           selected = task_ids,   # initially all
-          multiple = TRUE,
-          options = list(plugins = list('remove_button'))
+          multiple = TRUE
         ),
         # Add two action buttons below the dropdown
         actionButton("select_all_tasks", "Select All"),
@@ -2550,11 +2629,11 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     observeEvent(input$select_all_tasks, {
       req(df_react())
       task_ids <- seq_len(nrow(df_react()))
-      updateSelectizeInput(session, "selected_task_ids", selected = task_ids)
+      updateSelectInput(session, "selected_task_ids", selected = task_ids)
     })
     
     observeEvent(input$deselect_all_tasks, {
-      updateSelectizeInput(session, "selected_task_ids", selected = character(0))
+      updateSelectInput(session, "selected_task_ids", selected = character(0))
     })
     
     #---------logic for select/deselect all ends ----------------------
