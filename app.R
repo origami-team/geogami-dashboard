@@ -210,7 +210,7 @@ ui <- page_sidebar(
 
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
-      "Version 1.5.1 - 11:10 24.10.2025"
+      "Version 1.5.1 - 12:10 24.10.2025"
 
     )
   ),

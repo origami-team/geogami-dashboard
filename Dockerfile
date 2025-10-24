@@ -22,6 +22,8 @@ RUN mkdir -p /srv/shiny-server/app_cache && \
 
 # Copy the Shiny app into the container
 COPY app.R /srv/shiny-server/
+# Copy www folder which contains additional resources
+COPY www /srv/shiny-server/www/
 COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
 
 # Expose Shiny default port
