@@ -210,7 +210,8 @@ ui <- page_sidebar(
 
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
-      "Version 1.5.1 - 12:10 24.10.2025"
+
+      "Version 1.5.1 - 12:33 24.10.2025"
 
     )
   ),
@@ -359,6 +360,8 @@ server <- function(input, output, session) {
 
   # Store selected game track data reactively
   selected_game_tracks_rv <- reactiveVal()
+  
+  games_choices_rv <- reactiveVal()   # store mapping of game_id -> game_name (CREATING THIS FOR zip file that gets downloaded, this is used for giving the right name to the zip file that gets downloaded)
   # Store access token reactively
   accessToken_rv <- reactiveVal()
   track_data_rv <- reactiveVal()
@@ -403,8 +406,10 @@ server <- function(input, output, session) {
     }
 
     ### 2. Populate select input for games
+    mapping <- setNames(games_id, games_name)
+    games_choices_rv(mapping)  #MADE THIS CHANGE FOR CREATING ZIP FILE NAME (download button issue) AS PER THE GAME LOADED
     updateSelectInput(session, "selected_games",
-                          choices = setNames(games_id, games_name))
+                          choices = mapping)
   
     output$info_download <- renderText({
         ""
@@ -450,31 +455,43 @@ server <- function(input, output, session) {
     }
   })
 
-  # # Download json file
-  # output$download_json <- downloadHandler(
-  #   filename = function() {
-  #     selected_track_data = track_data_rv()
-  #     paste0(selected_track_data$players, " - ", selected_track_data$createdAt,".json")
-  #   },
-  #   content = function(file) {
-  #     req(input$selected_files)  # Ensure some files are selected
-  #     list_to_save <- track_data_rv()  # Your reactive list
-  # 
-  #     # Save to JSON
-  #     jsonlite::write_json(list_to_save, path = file, pretty = TRUE, auto_unbox = TRUE, digits = NA)
-  #   }
-  # )
+  
 
-  # Downloading one or more JSON files
+  # --- DOWNLOAD JSON (single or multiple) ---
   output$download_json <- downloadHandler(
     filename = function() {
+      req(input$selected_files)
+
+      ############mapping of zip file i.e = name of the chosen game STARTS##############
+
+      # --- looking up readable game name from the stored mapping (game_id -> game_name) ---
+      games_map <- games_choices_rv()   # this was saved earlier
+      # games_map is a named vector where names(games_map) == games_name and games_map == games_id
+      game_name <- NA_character_
+      if (!is.null(games_map) && length(games_map) > 0) {
+        # finding here the name whose value equals the selected id
+        idx <- which(games_map == input$selected_games)
+        if (length(idx) > 0) {
+          game_name <- names(games_map)[idx[1]]
+        }
+      }
+      if (is.null(game_name) || length(game_name) == 0 || is.na(game_name)) {
+        game_name <- "geogami_game"
+      }
+      # clearing here the whitespaces if any (replace whitespace or other problematic chars with underscore)
+      game_name <- gsub("[^A-Za-z0-9_\\-]", "_", game_name)
+      ############mapping of zip file i.e = name of the chosen game ENDS##############
+
       if (length(input$selected_files) > 1) {
-        paste0("geogami_tracks_", Sys.Date(), ".zip")
+        paste0(game_name, "_tracks_", Sys.Date(), ".zip")
       } else {
         selected_track_data <- track_data_rv()
-        paste0(selected_track_data$players, " - ", selected_track_data$createdAt, ".json")
+        player_name <- gsub("\\s+", "_", selected_track_data$players)
+        date_label <- substr(selected_track_data$createdAt, 1, 10)
+        paste0(player_name, "_", date_label, ".json")
       }
     },
+
     content = function(file) {
       req(input$selected_files)
 
@@ -483,6 +500,7 @@ server <- function(input, output, session) {
         # Creating a temporary directory to hold all the files
         tmpdir <- tempdir()
         json_files <- c()
+        game_name <- gsub("\\s+", "_", input$selected_games)##########
 
         for (selected_id in input$selected_files) {
           url <- paste0(apiURL_rv(), "/track/", selected_id)
@@ -491,13 +509,24 @@ server <- function(input, output, session) {
           # Handling empty results
           if (is.null(track_data)) next
 
-          # File name for each JSON
-          fname <- file.path(tmpdir, paste0(selected_id, ".json"))
-          jsonlite::write_json(track_data, path = fname, pretty = TRUE, auto_unbox = TRUE)
+          # giving Clean filenames: PlayerName_Date.json
+          player_name <- gsub("\\s+", "_", track_data$players)
+          date_label <- substr(track_data$createdAt, 1, 10)
+          fname <- file.path(tmpdir, paste0(player_name, "_", date_label, ".json"))
+
+          # Preserving coordinate precision
+          jsonlite::write_json(
+            track_data,
+            path = fname,
+            pretty = TRUE,
+            auto_unbox = TRUE,
+            digits = NA   # keeping all coordinate decimals
+          )
+
           json_files <- c(json_files, fname)
         }
 
-        # Zip all JSON files together
+        # Bundling all JSONs into ZIP
         zip::zipr(zipfile = file, files = json_files, recurse = FALSE)
 
       } else {
@@ -506,7 +535,14 @@ server <- function(input, output, session) {
         url <- paste0(apiURL_rv(), "/track/", selected_id)
         track_data <- fetch_games_data_from_server(url, accessToken_rv())
 
-        jsonlite::write_json(track_data, path = file, pretty = TRUE, auto_unbox = TRUE)
+        # Preserving here all/ full coordinate precision for trajectory normalization
+        jsonlite::write_json(
+          track_data,
+          path = file,
+          pretty = TRUE,
+          auto_unbox = TRUE,
+          digits = NA   #  keeping all coordinate decimals
+        )
       }
     }
   )
@@ -2677,6 +2713,41 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       iconWidth = 20, iconHeight = 20,
       iconAnchorX = 10, iconAnchorY = 20,
     )
+    
+    
+   
+    
+    ###########-------------START : downloaded json files issue solved here : safely handled the empty df and NA values--- THIS SOLVED THE MAP RENDERING ISSUE FOR THEME OBJECTS##################
+    # --- SAFE MAP RENDERING for upload button ---
+    # Cleaning all coordinate vectors before plotting with leaflet.
+    # Preventing the "invalid lat/lon" and "data.frame row names" errors.
+    # we can use this function before any addMarkers(), addCircles(), or addPolylines() calls.
+    # Cleaned all coordinate vectors before using them
+    
+    # --- SAFE MAP RENDERING ---
+    # Helper: safely unlist and remove invalid coords
+    safe_coords <- function(x) {
+      x <- unlist(x)
+      x <- x[is.finite(x) & !is.na(x)]
+      return(x)
+    }
+    
+    long <- safe_coords(long)
+    lati <- safe_coords(lati)
+    traj_lng <- safe_coords(traj_lng)
+    traj_lat <- safe_coords(traj_lat)
+    lng_targ <- safe_coords(lng_targ)
+    lat_targ <- safe_coords(lat_targ)
+    lng_true <- safe_coords(lng_true)
+    lat_true <- safe_coords(lat_true)
+    lng_poly <- safe_coords(lng_poly)
+    lat_poly <- safe_coords(lat_poly)
+    lng_ans_obj <- safe_coords(lng_ans_obj)
+    lat_ans_obj <- safe_coords(lat_ans_obj)
+    dr_point_lng <- safe_coords(dr_point_lng)
+    dr_point_lat <- safe_coords(dr_point_lat)
+    
+    ###########-------------END : downloaded json files issue solved here : safely handled the empty df and NA values--- THIS SOLVED THE MAP RENDERING ISSUE FOR THEME OBJECTS##################
     
     #Print map
     if (mr == TRUE || length(ans) <= input$num_value || (length(lng_targ) == 0 && length(lng_true) == 0 && t == "theme-loc")
