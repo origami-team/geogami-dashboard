@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install R packages
-RUN R -e "install.packages(c('shiny', 'shinythemes', 'DT', 'wordcloud2', 'ggplot2', 'stringr', 'dplyr', 'leaflet', 'bslib', 'htmlwidgets', 'httr', 'jsonlite'), repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages(c('shiny', 'shinythemes', 'DT', 'wordcloud2', 'ggplot2', 'stringr', 'dplyr', 'leaflet', 'bslib', 'htmlwidgets', 'httr', 'jsonlite', 'zip'), repos='http://cran.rstudio.com/')"
 
 # This gives the shiny user the necessary write access.
 RUN mkdir -p /srv/shiny-server/app_cache && \
@@ -22,6 +22,8 @@ RUN mkdir -p /srv/shiny-server/app_cache && \
 
 # Copy the Shiny app into the container
 COPY app.R /srv/shiny-server/
+# Copy www folder which contains additional resources
+COPY www /srv/shiny-server/www/
 COPY shiny-server.conf /etc/shiny-server/shiny-server.conf
 
 # Expose Shiny default port
