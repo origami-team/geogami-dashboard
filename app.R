@@ -1369,7 +1369,10 @@ observeEvent(req(input$selected_data_file, input$num_value), {
         )
 
         # Load virtual environment properties from JSON
-        virEnvsProperties <- fromJSON("www/virEnvsProperties.json");
+        # virEnvsProperties <- fromJSON("www/virEnvsProperties.json");
+        virEnvsProperties <- jsonlite::fromJSON(
+          file.path(getwd(), "www", "virEnvsProperties.json")
+        )
 
         # render virtual environment map
         output$map <- renderLeaflet({
