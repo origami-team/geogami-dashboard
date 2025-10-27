@@ -3,6 +3,10 @@ version: '3'
 services:
   shiny:
     # platform: linux/amd64 # comment in if you are on Apple Silicon
+
+    # build:  # use locally built image for testing
+    #   context: .
+    #   dockerfile: Dockerfile
     image: ghcr.io/origami-team/shiny-app:main
     ports:
       - "3838:3838"
