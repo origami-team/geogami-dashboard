@@ -3050,20 +3050,25 @@ observeEvent(req(input$selected_data_file, input$num_value), {
   
   
   all_ids <- c("num_value", "num_value_pictures", "num_value_comparison", "num_value_Statistics")
-  #NOTE : num_value is the important variable, all of the other stored elements are triggered because of 'num_value'
+  
+  # Flag to prevent circular reactivity
+  sync_lock <- reactiveVal(FALSE)
   
   for (id in all_ids) {
     local({
       this_id <- id
       observeEvent(input[[this_id]], {
+        if (sync_lock()) return()
         val <- input[[this_id]]
         if (is.null(val)) return()
         
+        sync_lock(TRUE)
         for (other in setdiff(all_ids, this_id)) {
           if (is.null(input[[other]]) || !identical(val, input[[other]])) {
             updateNumericInput(session, other, value = val)
           }
         }
+        sync_lock(FALSE)
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
     })
   }
