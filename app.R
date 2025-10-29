@@ -51,7 +51,7 @@ git_version <- tryCatch({
   time_part <- trimws(system("git log -1 --format='%cd' --date=format:%H:%M:%S", intern = TRUE))
   # Combine with custom separator
   paste0(date_part, " ", time_part)
-  paste0("Version 1.5.1 - ", date_part, " ", time_part)
+  paste0("Version 1.5.2 - ", date_part, " ", time_part)
 }, error = function(e) {
   # Fallback if Git is unavailable
   format(Sys.time(), "%d.%m.%y %H:%M:%S")
