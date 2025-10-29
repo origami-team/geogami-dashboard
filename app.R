@@ -43,14 +43,13 @@ fetch_games_data_from_server <- function(url, token) {
   }
 }
 
-# Get Git version and commit time
+# Get Git version and commit time of latest commit in main branch
 git_version <- tryCatch({
   # Get commit date in dd.mm.yy format
-  date_part <- trimws(system("git log -1 --format='%cd' --date=format:%d.%m.%y", intern = TRUE))
+  date_part <- trimws(system("git log -n 1 main --format='%cd' --date=format:%d.%m.%y", intern = TRUE))
   # Get commit time in hh:mm:ss format
-  time_part <- trimws(system("git log -1 --format='%cd' --date=format:%H:%M:%S", intern = TRUE))
+  time_part <- trimws(system("git log -n 1 main --format='%cd' --date=format:%H:%M:%S", intern = TRUE))
   # Combine with custom separator
-  paste0(date_part, " ", time_part)
   paste0("Version 1.5.2 - ", date_part, " ", time_part)
 }, error = function(e) {
   # Fallback if Git is unavailable
