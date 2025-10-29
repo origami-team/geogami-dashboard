@@ -224,8 +224,8 @@ ui <- page_sidebar(
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
 
-      # "Version 1.5.1 - 12:33 24.10.2025"
-      HTML(paste0("Version 1.5.1 - " , format(Sys.time(), "%d.%m.%y %H:%M:%S")))      
+      # "Version 1.5.5 - 12:33 24.10.2025"
+      HTML(paste0("Version 1.5.5 - " , format(Sys.time(), "%d.%m.%y %H:%M:%S")))      
     )
   ),
   
