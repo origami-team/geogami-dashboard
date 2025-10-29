@@ -2049,13 +2049,31 @@ observeEvent(req(input$selected_data_file, input$num_value), {
         labs(title = "You didn't reply for this task")
     }
     else {
+      # Calculate percentages
+      df_pie$percentage <- round(df_pie$value / sum(df_pie$value) * 100, 1)
+      df_pie$label <- paste0(df_pie$Answers, ": ", df_pie$percentage, "%")
+      
+      # Count how many players were selected
+      num_players <- length(input$selected_multiple_files)
+      
       pie_chart <- ggplot(df_pie, aes(x = "", y = value, fill = Answers)) +
-        geom_col() +
+        geom_col(width = 1) +
         coord_polar(theta = "y") +
+        geom_text(aes(label = label), 
+                  position = position_stack(vjust = 0.5), 
+                  color = "white", size = 5, fontface = "bold") +
         scale_fill_manual(values = c("#3C8D53","#BE2A3E")) +
         theme_void() +
-        labs(title = paste("Pie chart of task:", t))
+        labs(
+          title = paste("Pie chart of task:", t),
+          subtitle = paste("\n\nNo. of Players Selected:", num_players)
+        ) +
+        theme(
+          plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+          plot.subtitle = element_text(size = 16, face = "italic", hjust = 0.5)
+        )
     }
+    
     
     #Two outputs because two conditions in UI
     output$pie_chart <- renderPlot({
