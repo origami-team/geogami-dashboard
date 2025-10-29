@@ -224,8 +224,8 @@ ui <- page_sidebar(
     div(
       style = "text-align: left; color: #888; font-size: 12px;",
 
-      # "Version 1.5.1 - 12:33 24.10.2025"
-      HTML(paste0("Version 1.5.1 - " , format(Sys.time(), "%d.%m.%y %H:%M:%S")))      
+      # "Version 1.5.5 - 12:33 24.10.2025"
+      HTML(paste0("Version 1.5.5 - " , format(Sys.time(), "%d.%m.%y %H:%M:%S")))      
     )
   ),
   
@@ -2047,13 +2047,31 @@ observeEvent(req(input$selected_data_file, input$num_value), {
         labs(title = "You didn't reply for this task")
     }
     else {
+      # Calculate percentages
+      df_pie$percentage <- round(df_pie$value / sum(df_pie$value) * 100, 1)
+      df_pie$label <- paste0(df_pie$Answers, ": ", df_pie$percentage, "%")
+      
+      # Count how many players were selected
+      num_players <- length(input$selected_multiple_files)
+      
       pie_chart <- ggplot(df_pie, aes(x = "", y = value, fill = Answers)) +
-        geom_col() +
+        geom_col(width = 1) +
         coord_polar(theta = "y") +
+        geom_text(aes(label = label), 
+                  position = position_stack(vjust = 0.5), 
+                  color = "white", size = 5, fontface = "bold") +
         scale_fill_manual(values = c("#3C8D53","#BE2A3E")) +
         theme_void() +
-        labs(title = paste("Pie chart of task:", t))
+        labs(
+          title = paste("Pie chart of task:", t),
+          subtitle = paste("\n\nNo. of Players Selected:", num_players)
+        ) +
+        theme(
+          plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+          plot.subtitle = element_text(size = 16, face = "italic", hjust = 0.5)
+        )
     }
+    
     
     #Two outputs because two conditions in UI
     output$pie_chart <- renderPlot({
@@ -3048,20 +3066,25 @@ observeEvent(req(input$selected_data_file, input$num_value), {
   
   
   all_ids <- c("num_value", "num_value_pictures", "num_value_comparison", "num_value_Statistics")
-  #NOTE : num_value is the important variable, all of the other stored elements are triggered because of 'num_value'
+  
+  # Flag to prevent circular reactivity
+  sync_lock <- reactiveVal(FALSE)
   
   for (id in all_ids) {
     local({
       this_id <- id
       observeEvent(input[[this_id]], {
+        if (sync_lock()) return()
         val <- input[[this_id]]
         if (is.null(val)) return()
         
+        sync_lock(TRUE)
         for (other in setdiff(all_ids, this_id)) {
           if (is.null(input[[other]]) || !identical(val, input[[other]])) {
             updateNumericInput(session, other, value = val)
           }
         }
+        sync_lock(FALSE)
       }, ignoreInit = TRUE, ignoreNULL = TRUE)
     })
   }
