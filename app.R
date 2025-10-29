@@ -43,18 +43,19 @@ fetch_games_data_from_server <- function(url, token) {
   }
 }
 
+# commited out as there was an issue that it works fine locally but not on the server
 # Get Git version and commit time of latest commit in main branch
-git_version <- tryCatch({
-  # Get commit date in dd.mm.yy format
-  date_part <- trimws(system("git log -n 1 main --format='%cd' --date=format:%d.%m.%y", intern = TRUE))
-  # Get commit time in hh:mm:ss format
-  time_part <- trimws(system("git log -n 1 main --format='%cd' --date=format:%H:%M:%S", intern = TRUE))
-  # Combine with custom separator
-  paste0("Version 1.5.2 - ", date_part, " ", time_part)
-}, error = function(e) {
-  # Fallback if Git is unavailable
-  format(Sys.time(), "%d.%m.%y %H:%M:%S")
-})
+# git_version <- tryCatch({
+#   # Get commit date in dd.mm.yy format
+#   date_part <- trimws(system("git log -n 1 main --format='%cd' --date=format:%d.%m.%y", intern = TRUE))
+#   # Get commit time in hh:mm:ss format
+#   time_part <- trimws(system("git log -n 1 main --format='%cd' --date=format:%H:%M:%S", intern = TRUE))
+#   # Combine with custom separator
+#   paste0("Version 1.5.2 - ", date_part, " ", time_part)
+# }, error = function(e) {
+#   # Fallback if Git is unavailable
+#   format(Sys.time(), "%d.%m.%y %H:%M:%S")
+# })
 
 ui <- page_sidebar(
   title = div(
@@ -224,9 +225,7 @@ ui <- page_sidebar(
       style = "text-align: left; color: #888; font-size: 12px;",
 
       # "Version 1.5.1 - 12:33 24.10.2025"
-      HTML(paste0("<small>", git_version, "</small>"))
-      
-
+      HTML(paste0("Version 1.5.1 - " , format(Sys.time(), "%d.%m.%y %H:%M:%S")))      
     )
   ),
   
