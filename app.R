@@ -11,6 +11,7 @@ library(bslib)
 library(htmlwidgets)
 library(httr)
 library(zip)
+library(shinyWidgets)
 iris$Species <- NULL
 # Define the directory where JSON files are stored
 json_dir <- getwd()  # or set to your specific directory, e.g., "data/json"
@@ -68,7 +69,7 @@ ui <- page_sidebar(
   ),
   
   tags$head(
-    tags$style(HTML('
+    tags$style(HTML("
     #selected_multiple_files-label + div div > .items {
       width: 80vw;
     }
@@ -150,14 +151,14 @@ ui <- page_sidebar(
         max-width: 100% !important;
       }
     }
-
+    
+    
     .selectize-control {
       width: 100% !important;
     }
     .selectize-input {
       width: 100% !important;
     }
-    
 
     /* Hover effect on main tabs */
     .nav-tabs > li > a:hover {
@@ -166,9 +167,52 @@ ui <- page_sidebar(
       border: 1px solid #ffc107;
     }
 
+    .bootstrap-select,
+    .bootstrap-select .dropdown-menu {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
     
+    .dropdown-menu.inner {
+      max-height: 300px !important;
+      overflow-y: auto !important;
+    }
+  
+  
+  /* Make pickerInput dropdown items behave like selectInput */
+  .bootstrap-select .dropdown-menu li a {
+    white-space: normal !important;      /* allow multi-line wrapping */
+    line-height: 1.3 !important;         /* adjust vertical spacing */
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+  }
 
-  '))
+  /* Align and restyle check marks */
+  .bootstrap-select .dropdown-menu li a span.check-mark {
+    position: absolute !important;
+    right: 10px !important;
+    top: 50% !important;
+    transform: translateY(-50%);
+    color: #198754;                      /* green tick */
+    font-size: 14px;
+  }
+
+
+    /* Make pickerInput dropdown text darker and bolder like selectInput */
+.bootstrap-select .dropdown-menu li a span.text {
+  font-weight: 400 !important;   /* similar to selectInput weight */
+  color: #000 !important;        /* pure black text for better contrast */
+}
+
+    /* Optional: make the selected text (on the button) also bold */
+.bootstrap-select .filter-option-inner-inner {
+  font-weight: 400 !important;
+  color: #000 !important;
+}
+
+
+    
+  "))
   ),
   
   theme = bs_theme(),  # initially empty theme
@@ -203,11 +247,19 @@ ui <- page_sidebar(
     conditionalPanel(
       condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
       div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-          selectInput(
+          pickerInput(
             inputId = "selected_files",
             label = "Select the players:",
             choices = NULL,  # Leave it empty initially
-            multiple = TRUE
+            multiple = TRUE,
+            options = list(
+              `actions-box` = TRUE,
+              `live-search` = FALSE,
+              `none-selected-text` = "Select a player",
+              `width` = '100%',
+              container = FALSE,
+              size = 10
+            )
           ),
           actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
           textOutput("info_download"),
@@ -459,7 +511,7 @@ server <- function(input, output, session) {
       choices_rv(choices)
       
       
-      updateSelectInput(session, "selected_files",
+      updatePickerInput(session, "selected_files",
                           choices = choices)
 
       output$info_download <- renderText({
@@ -572,7 +624,7 @@ server <- function(input, output, session) {
         paste0(tracks_data$players, " - ", tracks_data$createdAt)
       )
       
-      updateSelectInput(session, "selected_files",
+      updatePickerInput(session, "selected_files",
                           choices = choices,
                           selected = NULL)
     }
