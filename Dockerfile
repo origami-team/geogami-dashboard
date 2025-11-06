@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install R packages
-RUN R -e "install.packages(c('shiny', 'shinythemes', 'DT', 'wordcloud2', 'ggplot2', 'stringr', 'dplyr', 'leaflet', 'bslib', 'htmlwidgets', 'httr', 'jsonlite', 'zip'), repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages(c('shiny', 'shinythemes', 'DT', 'wordcloud2', 'ggplot2', 'stringr', 'dplyr', 'leaflet', 'bslib', 'htmlwidgets', 'httr', 'jsonlite', 'zip', 'shinyWidgets'), repos='http://cran.rstudio.com/')"
 
 # This gives the shiny user the necessary write access.
 RUN mkdir -p /srv/shiny-server/app_cache && \
