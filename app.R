@@ -240,11 +240,20 @@ ui <- page_sidebar(
     conditionalPanel(
       condition = "typeof window.location.search.match(/token=([^&]+)/) !== 'undefined' && window.location.search.match(/token=([^&]+)/) !== null",
       div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; border-radius: 8px;",
-        selectInput(
-        inputId = "selected_games",
-        label = "Select your game:",
-        choices = NULL  # Leave it empty initially
-        )
+          pickerInput(
+            inputId = "selected_games",
+            label = "Select your game:",
+            choices = NULL,  # Leave it empty initially
+            multiple = FALSE,
+            options = list(
+              `actions-box` = TRUE,
+              `live-search` = FALSE,
+              `none-selected-text` = "Select a player",
+              `width` = '100%',
+              container = FALSE,
+              size = 10
+            )
+          )
       )
     ),
     
@@ -296,15 +305,15 @@ ui <- page_sidebar(
              border: 1px solid #ccc; padding: 10px;",
         # Task filter
         div(style = "min-width: 300px;", 
-        uiOutput("task_id_selector")),
+            uiOutput("task_id_selector")),
         
         # Player selector
         div(style = "min-width: 300px;", 
-        uiOutput("file_selector_ui"))
+            uiOutput("file_selector_ui"))
       ),
       
-             uiOutput("player_info_box"),
-             DTOutput('iris_data'),
+      uiOutput("player_info_box"),
+      DTOutput('iris_data'),
       div(
         style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
         uiOutput('save_big_table')
@@ -317,12 +326,12 @@ ui <- page_sidebar(
         style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
              margin-top: 20px; margin-bottom: 15px;
              border: 1px solid #ccc; padding: 10px;",
-        div(style = "min-width: 300px;", numericInput("num_value", "Selected Tasks:", value = 1, min = 1, max = 1)),
+        div(style = "min-width: 300px;", pickerInput("num_value", "Selected Tasks:", choices = 1, selected = 1, multiple = FALSE)),
         div(style = "min-width: 300px;", uiOutput("file_selector_ui3"))
       ),
       textOutput("mapLegend"),
       div(id="map", leafletOutput("map"), style = "margin-top: 5px"),
-             div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+      div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
           downloadButton('downloadMap','Save the map'), full_screen = TRUE)
     ),
     tabPanel(
@@ -343,7 +352,7 @@ ui <- page_sidebar(
            margin-top: 20px; margin-bottom: 15px;
            border: 1px solid #ccc; padding: 10px;",
         div(style = "min-width: 300px; max-width: 350px;", 
-            numericInput("num_value_comparison", "Selected Tasks:", value = 1, min = 1, max = 1)
+            pickerInput("num_value_comparison", "Selected Tasks:", choices = 1, selected = 1, multiple = FALSE)
         ),
         div(style = "flex: 1; max-width: 700px;", 
             uiOutput("file_selector_ui1")
@@ -361,12 +370,12 @@ ui <- page_sidebar(
       conditionalPanel(
         condition = "output.tabLegend == 'Task type: Navigation to flag' || output.tabLegend == 'Task type: Navigation with arrow' || output.tabLegend == 'Task type: Navigation via text' || output.tabLegend == 'Task type: Navigation via photo'",
         card(h4("Route length versus time"), tableOutput('cmp_table1'), downloadButton('save_table1', 'Save to csv'), style = "margin-top: 10px")
-                              ),
+      ),
       conditionalPanel(
         condition = "output.tabLegend == 'Task type: Direction determination'",
-                              card(h4("Answer and error for direction task"), tableOutput('cmp_table2'), downloadButton('save_table2', 'Save to csv'), style = "margin-top: 10px")
+        card(h4("Answer and error for direction task"), tableOutput('cmp_table2'), downloadButton('save_table2', 'Save to csv'), style = "margin-top: 10px")
       )
-             ),
+    ),
     tabPanel(
       'Statistics',
       div(
@@ -374,7 +383,7 @@ ui <- page_sidebar(
              margin-top: 20px; margin-bottom: 15px;
              border: 1px solid #ccc; padding: 10px;",
         div(style = "min-width: 300px;  max-width: 350px;", 
-            numericInput("num_value_Statistics", "Selected Tasks:", value = 1, min = 1, max = 1)
+            pickerInput("num_value_Statistics", "Selected Tasks:", choices = 1, selected = 1, multiple = FALSE)
         ),
         div(style = "flex: 1; max-width: 700px;", 
             uiOutput("file_selector_ui2")
@@ -388,40 +397,40 @@ ui <- page_sidebar(
       # }
       
       textOutput("graphLegend"),
-             #if the task category is navigation
-             conditionalPanel(condition = "output.graphLegend == 'Task type: Navigation to flag' || output.graphLegend == 'Task type: Navigation with arrow' || output.graphLegend == 'Task type: Navigation via text' || output.graphLegend == 'Task type: Navigation via photo'",
-                              selectInput(
-                                inputId = "graph_filter",
-                                label = "Choose graphic to display:",
-                                choices = c("Time VS Distance","Answer & Error"),
-                                selected = c("Answer & Error")
-                              ), conditionalPanel(
-                                condition = "input.graph_filter == 'Answer & Error'",
-                                card(card_header("Pie chart") , full_screen = TRUE, plotOutput('pie_chart'), 
-                                     div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                                     downloadButton('save_picture','Save to png')))
-                              ), conditionalPanel(
-                                condition = "input.graph_filter == 'Time VS Distance'",
-                                card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('time_chart'), 
-                                     div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                                     downloadButton('save_time_chart','Save to png')))
-                              )
-                              ),
-             #else, for the other tasks
-             conditionalPanel(condition = "output.graphLegend == 'Task type: Direction determination' || output.graphLegend == 'Task type: Free' || output.graphLegend == 'Task type: Self location' || output.graphLegend == 'Task type: Object location'",
-                              selectInput(
-                                inputId = "graph_filter2",
-                                label = "Choose graphic to display:",
-                                choices = c("Answer & Error"),
-                                selected = c("Answer & Error")
-                              ), conditionalPanel(
-                                condition = "input.graph_filter2 == 'Answer & Error'",
-                                card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('pie_chart2'),
-                                    div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
-                                    downloadButton('save_picture2','Save to png')))
-                              ),
-                              ),
-            )
+      #if the task category is navigation
+      conditionalPanel(condition = "output.graphLegend == 'Task type: Navigation to flag' || output.graphLegend == 'Task type: Navigation with arrow' || output.graphLegend == 'Task type: Navigation via text' || output.graphLegend == 'Task type: Navigation via photo'",
+                       pickerInput(
+                         inputId = "graph_filter",
+                         label = "Choose graphic to display:",
+                         choices = c("Time VS Distance","Answer & Error"),
+                         selected = c("Answer & Error")
+                       ), conditionalPanel(
+                         condition = "input.graph_filter == 'Answer & Error'",
+                         card(card_header("Pie chart") , full_screen = TRUE, plotOutput('pie_chart'), 
+                              div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+                                  downloadButton('save_picture','Save to png')))
+                       ), conditionalPanel(
+                         condition = "input.graph_filter == 'Time VS Distance'",
+                         card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('time_chart'), 
+                              div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+                                  downloadButton('save_time_chart','Save to png')))
+                       )
+      ),
+      #else, for the other tasks
+      conditionalPanel(condition = "output.graphLegend == 'Task type: Direction determination' || output.graphLegend == 'Task type: Free' || output.graphLegend == 'Task type: Self location' || output.graphLegend == 'Task type: Object location'",
+                       pickerInput(
+                         inputId = "graph_filter2",
+                         label = "Choose graphic to display:",
+                         choices = c("Answer & Error"),
+                         selected = c("Answer & Error")
+                       ), conditionalPanel(
+                         condition = "input.graph_filter2 == 'Answer & Error'",
+                         card(card_header("Time vs distance scatter plot"), full_screen = TRUE, plotOutput('pie_chart2'),
+                              div(style = "border: 0px solid #ccc; padding: 10px; margin-top: 15px; border-radius: 8px;",
+                                  downloadButton('save_picture2','Save to png')))
+                       ),
+      ),
+    )
   )
 )
 
@@ -517,23 +526,23 @@ server <- function(input, output, session) {
       
       
       updatePickerInput(session, "selected_files",
-                          choices = choices)
-
+                        choices = choices)
+      
       output$info_download <- renderText({
         ""
       })
     }
   })
-
   
-
+  
+  
   # --- DOWNLOAD JSON (single or multiple) ---
   output$download_json <- downloadHandler(
     filename = function() {
       req(input$selected_files)
-
+      
       ############mapping of zip file i.e = name of the chosen game STARTS##############
-
+      
       # --- looking up readable game name from the stored mapping (game_id -> game_name) ---
       games_map <- games_choices_rv()   # this was saved earlier
       # games_map is a named vector where names(games_map) == games_name and games_map == games_id
@@ -551,7 +560,7 @@ server <- function(input, output, session) {
       # clearing here the whitespaces if any (replace whitespace or other problematic chars with underscore)
       game_name <- gsub("[^A-Za-z0-9_\\-]", "_", game_name)
       ############mapping of zip file i.e = name of the chosen game ENDS##############
-
+      
       if (length(input$selected_files) > 1) {
         paste0(game_name, "_tracks_", Sys.Date(), ".zip")
       } else {
@@ -561,29 +570,29 @@ server <- function(input, output, session) {
         paste0(player_name, "_", date_label, ".json")
       }
     },
-
+    
     content = function(file) {
       req(input$selected_files)
-
+      
       # --- MULTIPLE FILES SELECTED ---
       if (length(input$selected_files) > 1) {
         # Creating a temporary directory to hold all the files
         tmpdir <- tempdir()
         json_files <- c()
         game_name <- gsub("\\s+", "_", input$selected_games)##########
-
+        
         for (selected_id in input$selected_files) {
           url <- paste0(apiURL_rv(), "/track/", selected_id)
           track_data <- fetch_games_data_from_server(url, accessToken_rv())
-
+          
           # Handling empty results
           if (is.null(track_data)) next
-
+          
           # giving Clean filenames: PlayerName_Date.json
           player_name <- gsub("\\s+", "_", track_data$players)
           date_label <- substr(track_data$createdAt, 1, 10)
           fname <- file.path(tmpdir, paste0(player_name, "_", date_label, ".json"))
-
+          
           # Preserving coordinate precision
           jsonlite::write_json(
             track_data,
@@ -592,19 +601,19 @@ server <- function(input, output, session) {
             auto_unbox = TRUE,
             digits = NA   # keeping all coordinate decimals
           )
-
+          
           json_files <- c(json_files, fname)
         }
-
+        
         # Bundling all JSONs into ZIP
         zip::zipr(zipfile = file, files = json_files, recurse = FALSE)
-
+        
       } else {
         # --- SINGLE FILE SELECTED ---
         selected_id <- input$selected_files[1]
         url <- paste0(apiURL_rv(), "/track/", selected_id)
         track_data <- fetch_games_data_from_server(url, accessToken_rv())
-
+        
         # Preserving here all/ full coordinate precision for trajectory normalization
         jsonlite::write_json(
           track_data,
@@ -641,19 +650,28 @@ server <- function(input, output, session) {
     req(choices_rv())  # ensuring here that the choices are ready
     
     req(input$selected_files)
-
-    selectInput("selected_data_file",
-                   "Selected Players:",
-                   choices = choices_rv(),
-                   selected = input$selected_files[1],
-                   multiple = FALSE)
+    
+    pickerInput("selected_data_file",
+                "Selected Players:",
+                choices = choices_rv(),
+                selected = input$selected_files[1],
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `live-search` = FALSE,
+                  `none-selected-text` = "Select a player",
+                  `width` = '100%',
+                  container = FALSE,
+                  size = 10
+                )
+    )
   })
   
   ### 7. Reactive: load selected single file data
   loaded_json <- reactive({
     req(input$selected_data_file)
     selected <- input$selected_data_file
-
+    
     lapply(selected, function(file) {
       track_id <- input$selected_data_file
       # Construct the API URL
@@ -664,35 +682,17 @@ server <- function(input, output, session) {
       return(track_data)
     })
   })
-
+  
   #Get the uploaded json file
   uploaded_json <- reactive({
     req(input$uploaded_json_file)
     datapaths <- input$uploaded_json_file$datapath
     
     lapply(datapaths, function(path) {
-     jsonlite::fromJSON(path)
+      jsonlite::fromJSON(path)
     })
   })
-
-  # ### 8. Reactive: load multiple json files for comparison
-  # load_multiple <- reactive({
-  #   req(input$selected_multiple_files)
-  # 
-  #   # If multiple IDs are found, use only the last one
-  #   sel <- input$selected_multiple_files[length(input$selected_multiple_files)]
-  # 
-  #   lapply(sel, function(file) {
-  #     track_id <- sel
-  #     # Construct the API URL
-  #     url <- paste0(apiURL_rv(), "/track/", track_id)
-  #     # Fetch and return the JSON data from the server
-  #     track_data <- fetch_games_data_from_server(url, accessToken_rv())
-  #     track_data_rv(track_data)  # Store the data in reactive value
-  #     return(track_data)
-  #   })
-  # })
-
+  
   
   ### 8. Reactive: load multiple json files for comparison
   load_multiple <- reactive({
@@ -724,14 +724,22 @@ server <- function(input, output, session) {
     req(choices_rv())  # ensuring here that the choices are ready
     
     req(input$selected_files)
-
+    
     tagList(
-      selectInput(
+      pickerInput(
         "selected_multiple_files", 
         "Selected Players:", 
         choices = choices_rv(),
-                selected = input$selected_files,
-        multiple = TRUE
+        selected = input$selected_files,
+        multiple = TRUE,
+        options = list(
+          `actions-box` = FALSE,
+          `live-search` = FALSE,
+          `none-selected-text` = "Select a player",
+          `width` = '100%',
+          container = FALSE,
+          size = 10
+        )
       )
       # ,
       # # Add select/deselect buttons
@@ -774,12 +782,20 @@ server <- function(input, output, session) {
     req(input$selected_files)
     
     tagList(
-      selectInput(
+      pickerInput(
         "selected_multiple_files",  
         "Selected Players:", 
         choices = choices_rv(),
-                selected = input$selected_files,
-        multiple = TRUE
+        selected = input$selected_files,
+        multiple = TRUE,
+        options = list(
+          `actions-box` = FALSE,
+          `live-search` = FALSE,
+          `none-selected-text` = "Select a player",
+          `width` = '100%',
+          container = FALSE,
+          size = 10
+        )
       )
       # ,
       # actionButton("select_all_players2", "Select All"),
@@ -822,11 +838,19 @@ server <- function(input, output, session) {
     
     req(input$selected_files)
     
-    selectInput("selected_data_file",
-                   "Selected Players: ",
-                   choices = choices_rv(),
-                   selected = input$selected_files[1],
-                   multiple = FALSE)
+    pickerInput("selected_data_file",
+                "Selected Players: ",
+                choices = choices_rv(),
+                selected = input$selected_files[1],
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `live-search` = FALSE,
+                  `none-selected-text` = "Select a player",
+                  `width` = '100%',
+                  container = FALSE,
+                  size = 10
+                ))
   })
   
   ##### Filter for photos
@@ -836,11 +860,19 @@ server <- function(input, output, session) {
     
     req(input$selected_files)
     
-    selectInput("selected_data_file",
-                   "Selected Players: ",
-                   choices = choices_rv(),
-                   selected = input$selected_files[1],
-                   multiple = FALSE)
+    pickerInput("selected_data_file",
+                "Selected Players: ",
+                choices = choices_rv(),
+                selected = input$selected_files[1],
+                multiple = FALSE,
+                options = list(
+                  `actions-box` = FALSE,
+                  `live-search` = FALSE,
+                  `none-selected-text` = "Select a player",
+                  `width` = '100%',
+                  container = FALSE,
+                  size = 10
+                ))
   })
   
   #####Big table code
@@ -1290,16 +1322,21 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
       
       tagList(
-        selectInput(
+        pickerInput(
           "selected_task_ids",
           "Filter by Task ID:",
           choices = task_ids,
           selected = task_ids,   # initially all
-          multiple = TRUE
-        ),
-        # Add two action buttons below the dropdown
-        actionButton("select_all_tasks", "Select All"),
-        actionButton("deselect_all_tasks", "Select None")
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `live-search` = FALSE,
+            `none-selected-text` = "Filter by Task ID: ",
+            `width` = '100%',
+            container = FALSE,
+            size = 10
+          )
+        )
       )
     })
     
@@ -2254,9 +2291,9 @@ observeEvent(req(input$selected_data_file, input$num_value), {
     
     choices <- c("All Files" = "ALL", files)
     
-    updateSelectInput(session, "selected_files",
-                         choices = choices,
-                         selected = NULL)
+    updatePickerInput(session, "selected_files",
+                      choices = choices,
+                      selected = NULL)
     
     output$info_download <- renderText({
       ""
@@ -2722,16 +2759,21 @@ observeEvent(req(input$selected_data_file, input$num_value), {
       task_ids <- seq_len(nrow(df))   # use row numbers as task IDs
       
       tagList(
-        selectInput(
+        pickerInput(
           "selected_task_ids",
           "Filter by Task ID:",
           choices = task_ids,
           selected = task_ids,   # initially all
-          multiple = TRUE
-        ),
-        # Add two action buttons below the dropdown
-        actionButton("select_all_tasks", "Select All"),
-        actionButton("deselect_all_tasks", "Deselect All")
+          multiple = TRUE,
+          options = list(
+            `actions-box` = TRUE,
+            `live-search` = FALSE,
+            `none-selected-text` = "Filter by Task ID: ",
+            `width` = '100%',
+            container = FALSE,
+            size = 10
+          )
+        )
       )
     })
     
