@@ -162,7 +162,7 @@ ui <- page_sidebar(
 
     /* Hover effect on main tabs */
     .nav-tabs > li > a:hover {
-      background-color: #27E7F5 !important;  /* yellow on hover */
+      background-color: #27E7F5 !important;  /* teal blue on hover */
       color: #000 !important;
       border: 1px solid #ffc107;
     }
@@ -211,7 +211,13 @@ ui <- page_sidebar(
 }
 
 
+    /* Make selected/hovered pickerInput option lighter */
+.bootstrap-select .dropdown-menu li.active a,
+.bootstrap-select .dropdown-menu li:hover a {
+  background-color: #27e7f5 !important; /* light teal-blue background */
+  color: #000 !important;                /* ensure text stays readable */
     
+
   "))
   ),
   
@@ -225,9 +231,8 @@ ui <- page_sidebar(
                  choices = c("Light", "Dark"),
                  inline = TRUE,
                  selected = "Light"),
-
-     # Upload JSON file section
-     div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 5px; border-radius: 5px;",
+    # Upload JSON file section
+    div(style = "border: 1px solid #ccc; padding: 10px; margin-bottom: 5px; border-radius: 5px;",
         fileInput("uploaded_json_file", "Upload JSON file:", accept = ".json", multiple = FALSE),
     ),
     
