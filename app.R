@@ -275,11 +275,11 @@ ui <- page_sidebar(
               size = 10
             )
           ),
-          actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
+          #actionButton("reset", "Reset", icon = icon("refresh"), style = "width:150px; margin-top: 10px; margin-bottom: 15px; margin-right: 15px"),
           textOutput("info_download"),
           downloadButton("download_json", "Download", icon = icon("download"), style = "width:150px; margin-top: 10px; margin-bottom: 15px;")
-        )
-      ),
+      )
+    ),
     
     
     #filter 2 - ID - 2nd div
@@ -340,7 +340,7 @@ ui <- page_sidebar(
         style = "display: flex; justify-content: flex-start; gap: 40px; align-items: flex-start;
              margin-top: 20px; margin-bottom: 15px;
              border: 1px solid #ccc; padding: 10px;",
-        div(style = "min-width: 300px;", numericInput("num_value_pictures", "Selected Tasks:", value = 1, min = 1, max = 1)),
+        div(style = "min-width: 300px;", pickerInput("num_value_pictures", "Selected Tasks:", choices = 1, selected = 1,multiple = FALSE)),
         div(style = "min-width: 300px;", uiOutput("file_selector_ui4"))
       ),
       card(uiOutput("photo_display"))
@@ -628,21 +628,21 @@ server <- function(input, output, session) {
   
   
   ### 5. Reset file selector when reset button clicked
-  observeEvent(input$reset, {
-    tracks_data <- selected_game_tracks_rv()
-    
-    if (!is.null(tracks_data)) {
-      choices <- setNames(
-        tracks_data[["_id"]],
-        paste0(tracks_data$players, " - ", tracks_data$createdAt)
-      )
-      
-      updatePickerInput(session, "selected_files",
-                          choices = choices,
-                          selected = NULL)
-    }
-  })
-
+  # observeEvent(input$reset, {
+  #   tracks_data <- selected_game_tracks_rv()
+  #   
+  #   if (!is.null(tracks_data)) {
+  #     choices <- setNames(
+  #       tracks_data[["_id"]],
+  #       paste0(tracks_data$players, " - ", tracks_data$createdAt)
+  #     )
+  #     
+  #     updatePickerInput(session, "selected_files",
+  #                       choices = choices,
+  #                       selected = NULL)
+  #   }
+  # })
+  
   # 6. Select single file to view
   output$file_selector_ui <- renderUI({
     
@@ -1278,30 +1278,37 @@ server <- function(input, output, session) {
     
     df_react(df)
     
+    #PREVIOUSLY OBSERVE BUTTONS - PICKER INPUT 
     # observe({
-    #   updateNumericInput(session, "num_value_tasks", 
-    #                      max = nrow(df_react()))
+    #   req(df_react())
+    #   choices <- seq_len(nrow(df_react()))
+    #   updatePickerInput(session, "num_value_comparison", choices = choices, selected = input$num_value_comparison)
     # })
     
-    observe({
-      updateNumericInput(session, "num_value", 
-                         max = nrow(df_react()))
-    })
     
-    observe({
-      updateNumericInput(session, "num_value_pictures", 
-                         max = nrow(df_react()))
-    })
     
-    observe({
-      updateNumericInput(session, "num_value_comparison", 
-                         max = nrow(df_react()))
+    ###############----------Task IDs updation all 4 STARTS-------------################
+    observeEvent(df_react(), {
+      df <- df_react()
+      if (is.null(df) || nrow(df) == 0) return()
+      
+      n <- nrow(df)
+      
+      # try to preserve current Map selection if valid; otherwise default to 1
+      cur <- suppressWarnings(as.integer(input$num_value))
+      if (is.na(cur) || cur < 1 || cur > n) cur <- 1
+      
+      # choices are strings for pickerInput
+      choice_vec <- as.character(seq_len(n))
+      sel <- as.character(cur)
+      
+      # Push the SAME choices + selected to all four pickers
+      for (id in all_ids) {
+        updatePickerInput(session, id, choices = choice_vec, selected = sel)
+      }
     })
+    ###############----------Task IDs updation all 4 STARTS-------------################
     
-    observe({
-      updateNumericInput(session, "num_value_Statistics", 
-                         max = nrow(df_react()))
-    })
     
     #all_ids <- c("num_value", "num_value_map", "num_value_pictures", "num_value_comparison", "num_value_Statistics")
     #NOTE : num_value is the important variable, all of the other stored elements are triggered because of 'num_value'
@@ -2719,33 +2726,37 @@ server <- function(input, output, session) {
     
     df_react(df)
     
+    
+    
+    #PREVIOUSLY OBSERVE BUTTONS - PICKER INPUT 
     # observe({
-    #   updateNumericInput(session, "num_value_tasks", 
-    #                      max = nrow(df_react()))
+    #   req(df_react())
+    #   choices <- seq_len(nrow(df_react()))
+    #   updatePickerInput(session, "num_value_comparison", choices = choices, selected = input$num_value_comparison)
     # })
     
-    observe({
-      updateNumericInput(session, "num_value", 
-                         max = nrow(df_react()))
-    })
     
-    observe({
-      updateNumericInput(session, "num_value_pictures", 
-                         max = nrow(df_react()))
+    ###############----------Task IDs updation all 4 STARTS-------------################
+    observeEvent(df_react(), {
+      df <- df_react()
+      if (is.null(df) || nrow(df) == 0) return()
+      
+      n <- nrow(df)
+      
+      # preserving current Map selection if valid; otherwise default to 1
+      cur <- suppressWarnings(as.integer(input$num_value))
+      if (is.na(cur) || cur < 1 || cur > n) cur <- 1
+      
+      # choices are strings for pickerInput
+      choice_vec <- as.character(seq_len(n))
+      sel <- as.character(cur)
+      
+      # Push the SAME choices + selected to all four pickers
+      for (id in all_ids) {
+        updatePickerInput(session, id, choices = choice_vec, selected = sel)
+      }
     })
-    
-    observe({
-      updateNumericInput(session, "num_value_comparison", 
-                         max = nrow(df_react()))
-    })
-    
-    observe({
-      updateNumericInput(session, "num_value_Statistics", 
-                         max = nrow(df_react()))
-    })
-    
-    #all_ids <- c("num_value", "num_value_map", "num_value_pictures", "num_value_comparison", "num_value_Statistics")
-    #NOTE : num_value is the important variable, all of the other stored elements are triggered because of 'num_value'
+    ###############----------Task IDs updation all 4 STARTS-------------################
     
     output$iris_data <- renderDT({
       df_react()
@@ -3013,7 +3024,7 @@ server <- function(input, output, session) {
     }
     
     if (length(pict) != 0) { #Photos in assignment
-      if (input$num_value <= length(pict) && !is.na(pict[[input$num_value]]) && pict[[input$num_value]] != "") {
+      if (num_value_num() <= length(pict) && !is.na(pict[[num_value_num()]]) && pict[[num_value_num()]] != "") {
         # Render photo display with download buttons
         output$photo_display <- renderUI({
           
@@ -3076,7 +3087,7 @@ server <- function(input, output, session) {
       })
     }
     
-    if (length(pict) != 0 && input$num_value > length(pict)) {
+    if (length(pict) != 0 && num_value_num() > length(pict)) {
       output$photo_display <- renderUI({
         "No task exists with this number"
       })
@@ -3151,29 +3162,41 @@ server <- function(input, output, session) {
   
   
   
+  #have defined the four pickers once
   all_ids <- c("num_value", "num_value_pictures", "num_value_comparison", "num_value_Statistics")
   
-  # Flag to prevent circular reactivity
-  sync_lock <- reactiveVal(FALSE)
+  # Helper to read Map picker as number wherever we compare
+  num_value_num <- reactive({
+    suppressWarnings(as.integer(input$num_value))
+  })
   
-  for (id in all_ids) {
-    local({
-      this_id <- id
-      observeEvent(input[[this_id]], {
-        if (sync_lock()) return()
-        val <- input[[this_id]]
-        if (is.null(val)) return()
-        
-        sync_lock(TRUE)
-        for (other in setdiff(all_ids, this_id)) {
-          if (is.null(input[[other]]) || !identical(val, input[[other]])) {
-            updateNumericInput(session, other, value = val)
+  # Preventing recursive updates
+  sync_lock <- FALSE
+  
+  # Set up sync observers once
+  observe({
+    for (id in all_ids) {
+      local({
+        this_id <- id
+        observeEvent(input[[this_id]], {
+          
+          if (is.null(input[[this_id]])) return()
+          if (sync_lock) return()
+          
+          val <- input[[this_id]]
+          
+          sync_lock <<- TRUE
+          for (other in setdiff(all_ids, this_id)) {
+            if (!identical(input[[other]], val)) {
+              updatePickerInput(session, other, selected = val)
+            }
           }
-        }
-        sync_lock(FALSE)
-      }, ignoreInit = TRUE, ignoreNULL = TRUE)
-    })
-  }
+          sync_lock <<- FALSE
+        }, ignoreInit = TRUE, ignoreNULL = TRUE)
+      })
+    }
+  })
+  
   
   
   
